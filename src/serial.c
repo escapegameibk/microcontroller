@@ -1,4 +1,5 @@
 /* serial interface for communication with a host
+
  * Copyright © 2018 tyrolyean
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -16,49 +17,83 @@
  */
 
 #include "serial.h"
-#include "uart_tools.h"
+#include "ecproto.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdio.h>
+        
+uint8_t recv_buf_master[BUFLEN_UART];
 
 int serial_init(){
-        
-        cli();
 
-        recv_buf = malloc(BUFLEN_UART);
-#if DEBUG
-        fprintf(&uart_stdout,"0%cserial init%c",PARAM_DELIMITER,CMD_DELIMITER);
-#endif
-        recv_len = 0;        
-        memset(recv_buf, 0, BUFLEN_UART);
-
-        sei();
-        UCSRB |= (1<<RXCIE0);
+	command_received = false;
+	recv_crsr_master = 0;
+	uart_init_master();
         
         return 0;
 }
 /*
  * the interrupt service routine for the uart controller
- * it ready 1 byte and saves it at the end of the buffer. if the buffer
- * contains a valid 
+ * it ready 1 byte and saves it at the end of the buffer. On revceive
+ * completion, the command received flag is set to true. 
  */
 ISR(USART0_RX_vect){
-        
-        /* start from the beginning if a valid command has been written, or
-         * if the buffer is full
-         */         
-        if(recv_buf[recv_len-1] == CMD_DELIMITER ){
-                recv_len = 0;
-        }
+	
+	recv_buf_master[recv_crsr_master++] = UDR0;
+	
+	if(recv_buf_master[recv_crsr_master - 1] == CMD_DELIMITER){
+		recv_crsr_master = 0;
+		command_received = true;
+	}
 
-        recv_buf[recv_len] = fgetc(&uart_stdin);
-        recv_buf[++recv_len] = 0; 
 }
 
-int command_ready(){
-        return (recv_buf[recv_len-1] == CMD_DELIMITER);
+int write_frame_to_master(const uint8_t* frame){
+	
+	for(uint8_t i = 0; i < frame[0]; i++){
+		
+		while( !(UCSR0A & (1<<UDRE0)) ); /* Wait for UDR to get ready */
+		UDR0 = frame[i];                       /* send */
+	}
+
+	return 0;
+
 }
 
+void uart_init_master(){
+
+#if 0
+	/* This is the original version of the algorithm used to calculate
+	 * the uart baud rate register value by goliath. It was not able to
+	 * handle higher baud rates. */
+	uint16_t ubrr = (uint16_t) ( (uint32_t)F_CPU/(16*UART_BAUD_RATE) - 1 );
+#else
+	/* This was copied from the source code of the arduino avr core. Please
+	 * take a look ath their source for more information:
+	 * https://github.com/arduino/ArduinoCore-avr/blob/master/cores/arduino/HardwareSerial.cpp
+	 * Line: 120.
+	 * Date: 2018/09/08
+	 */
+	uint16_t ubrr = (uint16_t) (((uint32_t) F_CPU / 8 / UART_BAUD_RATE - 1)
+		/ 2 );
+#endif
+
+        /* Set the baud rate */
+        UBRR0H = (unsigned char)(ubrr>>8);
+        UBRR0L = (unsigned char) ubrr;
+ 
+	UCSR0B = (1<<RXEN0) | (1<<TXEN0) | (1 << RXCIE0);                /* Enable receive and transmit */
+        UCSR0C = (1<<UCSZ01) | (1<<UCSZ00); /* 8 data bits, 1 stop bit */
+
+        /* Flush Receive-Buffers */
+        do{
+                UDR0;
+        }while( UCSR0A & (1<<RXC0) );
+
+        return;
+}

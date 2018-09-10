@@ -1,6 +1,6 @@
-/* controller for the hardware attached to the atmega and other stuff
+/* Port controlling parts.
  * Copyright © 2018 tyrolyean
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,22 +15,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
-
 #include <stddef.h>
 #include <stdint.h>
 
-int controller_init();
-int execute_command(char* cmd);
-int io_patrol();
-int update_io(char REG, int bit, int state);
-int process_update(char REG, volatile uint8_t* regp_new, uint8_t* regp_old);
-int register_dump();
+struct gpio_register_t{
+	unsigned volatile char* port;
+	unsigned volatile char* ddir;
+	unsigned volatile char* pin;
+	char car;
+};
 
-/* A save state of all registers, which get updated in sync with the host. */
-uint8_t PINA_o, PINB_o, PINC_o, PIND_o, PINE_o, PINF_o, PING_o, PINH_o, PINJ_o,
-       PINK_o, PINL_o;
+extern const struct gpio_register_t gpio_registers[];
 
+uint8_t gpio_register_cnt;
 
-#endif
+extern unsigned char last_pin_states[];
+extern unsigned char actual_pin_states[];
+
+int init_ports();
+
+int update_pins();
+size_t get_port_update_count();
+int send_port_updates();
+int save_ports();
+

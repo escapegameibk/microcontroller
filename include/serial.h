@@ -23,16 +23,19 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <stddef.h>
+#include <stdbool.h>
 
-#define CMD_DELIMITER 0x0A /* < END OF TRANSMISSION */
-#define PARAM_DELIMITER 0x3B /* < UNIT SEPARATOR */
+#define CMD_DELIMITER 0xFF /* < END OF FRAME */
 
 #define BUFLEN_UART 256
 
-size_t recv_len;
-char *recv_buf;
+extern uint8_t recv_buf_master[];
+uint8_t recv_crsr_master;
 
 int serial_init();
-int command_ready();
+bool command_received;
 
+int write_frame_to_master(const uint8_t* frame);
+
+void uart_init_master();
 #endif

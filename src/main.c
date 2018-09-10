@@ -15,69 +15,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "uart_tools.h"
 #include "serial.h"
-#include "controller.h"
+#include "ecproto.h"
+#include "port.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 
 int routine();
-int main(int argc, const char *argv[]){
+int main(){
         
-        /* initialize the uart connection to the controller */
-        uart_init(DEBUG);
-        controller_init();
-        serial_init();
-#if DEBUG
-        printf("0%cstartup finished%c",PARAM_DELIMITER,CMD_DELIMITER);
-#endif
+	cli();
 
+        /* initialize the uart connection to the controller */
+	init_ports();
+        serial_init();
+	sei();
         while(1){
                 if(routine() < 0){
-                        printf("1%cfailed to routine!%c",PARAM_DELIMITER, 
-                                        CMD_DELIMITER);
                 }
         }
 
         return 0;
 }
 
-
 int routine(){
 
-        if(command_ready()){
-                /* if a command has been read from the server, read it back
+        if(command_received){
+                /* if a command has been read from the master, read it back
                  * and clear it afterwards*/
-               
 
-                /* pretend to be atomic. if we would have gotten an interrupt
-                 * in the meantime, we will get an invalid command the next 
-                 * time we read.
+                /* pretend to be atomic. we don't want to receive anything
+		 * whilest processing the input.
                  */
                 cli(); /* < Disable interrupts */
-                char* buftmp = malloc(strlen(recv_buf));
-                if(buftmp == NULL){
-#if DEBUG
-                        printf("0%cfailed to allocate %i bytes for buftmp%c",
-                                        PARAM_DELIMITER, strlen(recv_buf),
-                                        CMD_DELIMITER);
-#endif
-                        sei();
-                        return -1;
-                }
-
-                strcpy(buftmp,recv_buf);
-                recv_len = 0;
-                memset(recv_buf,0,BUFLEN_UART);
+		parse_ecp_msg(recv_buf_master);
                 sei(); /* < Enable interrupts */
-                execute_command(buftmp);
-                free(buftmp);
+		command_received = false;
         }
-        
-        io_patrol();
-        
-
         return 0;
 }

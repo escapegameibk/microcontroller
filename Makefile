@@ -21,13 +21,13 @@ SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-CFLAGS := -mmcu=$(BOARD) -Os -I$(INCLUDEDIR)
+CFLAGS := -mmcu=$(BOARD) -Os -I$(INCLUDEDIR) -Wall -Wextra
 LDFLAGS := -mmcu=$(BOARD)
 
 # target files
 DIRS_TARGET := $(BINDIR) $(BUILDDIR)
-TARGET := $(BINDIR)/painter.hex
-TARGET_ELF := $(BINDIR)/painter.elf
+TARGET := $(BINDIR)/mc.hex
+TARGET_ELF := $(BINDIR)/mc.elf
 SRCFILES := $(wildcard $(SRCDIR)/*.c)
 OBJFILES := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCFILES))
 
