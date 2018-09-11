@@ -23,7 +23,7 @@
 #include <stdbool.h>
 
 /* Registers used are A,B,C,D,F,G,H,J,K,L */
-const struct gpio_register_t gpio_registers[] PROGMEM = {
+const struct gpio_register_t gpio_registers[] = {
 {&PORTA, &DDRA, &PINA, 'A' },
 {&PORTB, &DDRB, &PINB, 'B' },
 {&PORTC, &DDRC, &PINC, 'C' },
@@ -127,4 +127,14 @@ int save_ports(){
 		last_pin_states[i] = actual_pin_states[i];
 	}
 	return 0;	
+}
+
+gpio_register_t* get_port_reg_by_id(const char id){
+	for(size_t i = 0; i < gpio_register_cnt; i++ ){
+		if(gpio_registers[i].car == id){
+			return gpio_registers[i];
+		}
+	}
+	/* No found */
+	return NULL;
 }

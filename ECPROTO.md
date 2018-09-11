@@ -113,7 +113,9 @@ second parameter is the 'bit' of the register. The third parameter specifies
 wheter the port should be an "INPUT" or "OUTPUT" by using
 0x00 and 0x01 respectively as byte. It's response should be a frame with
 the same action id, and a boolean indicating success as payload. By default,
-everything is an ouput, and it's state is low.
+everything is an ouput, and it's state is low. In case a invalid payload is
+received, it is converted to a boolean, which makes everything apart from 0x00
+a 0x01 byte. 
 
 6. get port. ID 0x06
 

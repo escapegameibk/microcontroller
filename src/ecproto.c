@@ -65,6 +65,17 @@ int parse_ecp_msg(const uint8_t* msg){
 			 */
 			 return process_updates();
 			 break; /* Just in case :D */
+		case 2:
+			/* Ähhm i shouldn't receive that. This is only what i
+			 * have to send my master in order to not disappoint
+			 * him. Has my master disappointed me? What has
+			 * happened, i don't understand. */
+		case 3:
+		case 4:
+			/* TODO for daisychaining */
+			break;
+		case 5:
+			/* Defines a port.  */
 		case 9:
 			/* Request the gpio register count. */
 			return print_ecp_msg(9, &gpio_register_cnt, 

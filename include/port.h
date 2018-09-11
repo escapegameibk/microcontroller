@@ -25,8 +25,6 @@ struct gpio_register_t{
 	char car;
 };
 
-extern const struct gpio_register_t gpio_registers[];
-
 uint8_t gpio_register_cnt;
 
 extern unsigned char last_pin_states[];
