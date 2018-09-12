@@ -129,12 +129,63 @@ int save_ports(){
 	return 0;	
 }
 
-gpio_register_t* get_port_reg_by_id(const char id){
+const struct gpio_register_t* get_port_reg_by_id(const char id){
 	for(size_t i = 0; i < gpio_register_cnt; i++ ){
 		if(gpio_registers[i].car == id){
-			return gpio_registers[i];
+			return &gpio_registers[i];
 		}
 	}
 	/* No found */
 	return NULL;
+}
+
+/* Returns >= 0 on success and <= 0 on error */
+int write_port(char id, uint8_t bit, bool value){
+	const struct gpio_register_t* bank = get_port_reg_by_id(id);
+	if(bank == NULL){
+		/* Couldn't find bank */
+		return -1;
+	}
+
+	if(bit >= 8){
+		/* Too high bit */
+		return -2;
+	}
+
+	/* Should be fine */
+	*bank->port = (!!value) << bit;
+	return 0;
+}
+
+/* Returns >= 0 on success and <= 0 on error */
+int write_port_ddr(char id, uint8_t bit, bool value){
+	const struct gpio_register_t* bank = get_port_reg_by_id(id);
+	if(bank == NULL){
+		/* Couldn't find bank */
+		return -1;
+	}
+
+	if(bit >= 8){
+		/* Too high bit */
+		return -2;
+	}
+	
+	*bank->ddir = (!!value) << bit;
+	return 0;
+}
+
+/* Returns 0 for low, 1 for high, and > 1 on error */
+uint8_t get_port_pin(char id, uint8_t bit){
+	const struct gpio_register_t* bank = get_port_reg_by_id(id);
+	if(bank == NULL){
+		/* Couldn't find bank */
+		return 2;
+	}
+
+	if(bit >= 8){
+		/* Too high bit */
+		return 3;
+	}
+
+	return ((*bank->pin >> bit) & 0x01);
 }

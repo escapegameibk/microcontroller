@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 struct gpio_register_t{
 	unsigned volatile char* port;
@@ -37,3 +38,7 @@ size_t get_port_update_count();
 int send_port_updates();
 int save_ports();
 
+int write_port(char id, uint8_t bit, bool value);
+int write_port_ddr(char id, uint8_t bit, bool value);
+/* Returns 0 for low, 1 for high, and > 1 on error */
+uint8_t get_port_pin(char id, uint8_t bit);

@@ -75,7 +75,33 @@ int parse_ecp_msg(const uint8_t* msg){
 			/* TODO for daisychaining */
 			break;
 		case 5:
-			/* Defines a port.  */
+			/* Defines a port direction / writes to the ddr */
+			if(msg[0] <  3 + ECPROTO_OVERHEAD){
+				print_ecp_error("2 few parms");
+				return -3;
+			}
+			return print_success_reply(5, 
+				write_port_ddr(msg[2],msg[3], msg[5]) >= 0);
+			break;
+		case 6:
+			/* Gets a port */
+			if(msg[0] <  2 + ECPROTO_OVERHEAD){
+				print_ecp_error("2 few parms");
+				return -4;
+			}
+			
+			return print_ecp_pin_update(msg[2], msg[3], 
+				get_port_pin(msg[2], msg[3]));
+			break;
+		case 7:
+			/* Defines a port state / writes to the port */
+			if(msg[0] <  3 + ECPROTO_OVERHEAD){
+				print_ecp_error("2 few parms");
+				return -5;
+			}
+
+			return print_success_reply(7,write_port(msg[2],msg[3], msg[4]) >= 0);
+			break;
 		case 9:
 			/* Request the gpio register count. */
 			return print_ecp_msg(9, &gpio_register_cnt, 
@@ -95,9 +121,21 @@ int print_ecp_error(char* string){
 		1);
 }
 
-int print_ecp_pin_update(char reg_id, uint8_t bit_id, bool target){
+/* If the target is larger than 1, tell the master that the inputs were invalid
+ */
+int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target){
+	
+	if(target > 1){
+		print_ecp_error("fld 2 get prt");
+	}
+
 	uint8_t pay[] = {(uint8_t)reg_id, bit_id, target};
 	return print_ecp_msg(0x06, pay, sizeof(pay));
+}
+
+int print_success_reply(uint8_t action_id, bool success){
+	uint8_t suc = success;
+	return print_ecp_msg(action_id, &suc, sizeof(suc));
 }
 
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){

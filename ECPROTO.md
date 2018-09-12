@@ -127,7 +127,9 @@ the same action id and the current state of the requested port as a boolean.
 
 This writes the given boolean to the output, OR set's the port to be pulled low
 in case it is NOT an output, but an input. It's response should be a frame with
-the same action_id and a boolean indicating success.
+the same action_id and a boolean indicating success. It needs 3 params, the
+firsdt is the id of the register, the second one is the bit and the third one
+is a boolean indicating the state of the port.
 
 8. ERROR. ID 0x08
 
