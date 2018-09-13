@@ -46,7 +46,7 @@ ISR(USART0_RX_vect){
 	
 	recv_buf_master[recv_crsr_master++] = UDR0;
 	
-	if(recv_buf_master[recv_crsr_master - 1] == CMD_DELIMITER){
+	if(recv_buf_master[recv_crsr_master - 1] == CMD_DELIMITER && recv_buf_master[ECP_LEN_IDX] <= recv_crsr_master + 1){
 		recv_crsr_master = 0;
 		command_received = true;
 	}

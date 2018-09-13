@@ -22,10 +22,11 @@ the frame - 1, and the last byte sent is required to be 0xFF. A frame, where the
 length byte, is not the index + 1 of a 0xFF byte, shoulde be considered invalid
 and should be discarded. The length is followed by an action id. Everything
 after the action id is the action's payload. The payload may contain any data,
-(except for the 0xFF byte, which may only be sent once in an entire frame)
+(except for the 0xFF byte, which should only be sent once in an entire frame)
 but the total length of the frame is required to be less than 255 bytes in
 order to prevent the length byte to overflow, in which case the receiving party
-may trat any incoming data as an invalid frame.
+may trat any incoming data as an invalid frame. The ONLY case where a 0xFF byte
+is valid is inside of the checksum
 
 ## Sending and receiving
 
@@ -40,7 +41,8 @@ used should match the one of the CRC-16-IBM version and is also used in the
 modbus protocol and the usb protocol. The whole frame before the checksum is
 used as basisi for cecksum calculation. In case the checksum only consists of
 0x00 bytes, the responding side was too laszy to implement checksums, in which
-case a checksum comparison should be ommitted.
+case a checksum comparison should be ommitted. The checksum may contain a 0xFF
+byte.
 
 ## Action-IDs
 
@@ -138,7 +140,14 @@ suggested to be a string. The current operation is considered FAILED and the
 master should act accordingly. No messages should follow up this message, and
 it may only be sent by a slave.
 
-9. Request gpio register count
+9. Request gpio register count ID 0x09
 
 Request the amount of gpio registers configured. It's reply consists of a
 message with the same id and 1 parameter, the amount of registers. 
+
+10. Request all gpio registers ID 0x0A
+
+Request a list of gpio register IDs. The master may send this request. It's
+payload is empty. The slave should respond with a message with the same id and
+with the id-list as payload. A null-termination is not required.
+

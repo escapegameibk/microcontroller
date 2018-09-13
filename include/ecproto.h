@@ -49,5 +49,8 @@ int process_updates();
 #define WRITE_PORT_ACTION 7
 #define ERROR_ACTION 8
 
+#define ECP_LEN_IDX 0
+#define ECP_ID_IDX 1
+
 #endif /* ECPROTO_H */
 

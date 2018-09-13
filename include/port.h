@@ -42,3 +42,4 @@ int write_port(char id, uint8_t bit, bool value);
 int write_port_ddr(char id, uint8_t bit, bool value);
 /* Returns 0 for low, 1 for high, and > 1 on error */
 uint8_t get_port_pin(char id, uint8_t bit);
+int print_port_ids();

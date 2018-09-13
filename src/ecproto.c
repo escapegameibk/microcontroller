@@ -25,22 +25,18 @@
 
 int parse_ecp_msg(const uint8_t* msg){
 	
-	if(msg[msg[0] - 1] != 0xFF){
+	if(msg[msg[ECP_LEN_IDX] - 1] != 0xFF){
 		/* It doesn't matter, whether the checksums are right or not,
 		 * this shouldn't have happened.
 		 */
 		 print_ecp_error("invld frme len");
-		 char* str = malloc(30);
-		 sprintf(str, "%i", msg[0]);
-		 print_ecp_error(str);
-		 free(str);
 		 return -1;
 	}
 
 	/* Perced to checksum calculation */
-	uint16_t crc_is = ((msg[msg[0] - 3] & 0xFF) << 8 ) | (msg[msg[0] - 2] 
-		& 0xFF);
-	uint16_t crc_should = ibm_crc(msg, msg[0] - 3);
+	uint16_t crc_is = ((msg[msg[ECP_LEN_IDX] - 3] & 0xFF) << 8 ) | 
+		(msg[msg[ECP_LEN_IDX] - 2] & 0xFF);
+	uint16_t crc_should = ibm_crc(msg, msg[ECP_LEN_IDX] - 3);
 	if(crc_is != crc_should){
 		print_ecp_error("CRC msmtch");
 		return -2;
@@ -48,7 +44,7 @@ int parse_ecp_msg(const uint8_t* msg){
 	/* By this point we should have gotten a valid frame. All checksums are
 	 * valid and the frame should have a correct length. Now, let's start
 	 * validating it's logic. */
-	switch(msg[1]){
+	switch(msg[ECP_ID_IDX]){
 		
 		case 0:
 			/* I don't know why i got this message, but it's not my
@@ -76,7 +72,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			break;
 		case 5:
 			/* Defines a port direction / writes to the ddr */
-			if(msg[0] <  3 + ECPROTO_OVERHEAD){
+			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
 				return -3;
 			}
@@ -107,6 +103,9 @@ int parse_ecp_msg(const uint8_t* msg){
 			return print_ecp_msg(9, &gpio_register_cnt, 
 				sizeof(uint8_t));
 			break;
+		case 10:
+			/* Requested a list of register ids */
+			return print_port_ids();
 	}
 
 	return 0;

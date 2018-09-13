@@ -153,7 +153,12 @@ int write_port(char id, uint8_t bit, bool value){
 	}
 
 	/* Should be fine */
-	*bank->port = (!!value) << bit;
+	if(!!value){
+		*bank->port |= (!!value) << bit;
+	}else{
+		*bank->port &= ~(1 << bit);
+	}
+
 	return 0;
 }
 
@@ -169,8 +174,12 @@ int write_port_ddr(char id, uint8_t bit, bool value){
 		/* Too high bit */
 		return -2;
 	}
-	
-	*bank->ddir = (!!value) << bit;
+
+	if(!!value){
+		*bank->ddir |= (1) << bit;
+	}else{
+		*bank->ddir &= ~(1 << bit);
+	}
 	return 0;
 }
 
@@ -188,4 +197,13 @@ uint8_t get_port_pin(char id, uint8_t bit){
 	}
 
 	return ((*bank->pin >> bit) & 0x01);
+}
+
+int print_port_ids(){
+	uint8_t regids[gpio_register_cnt];
+	for(size_t i = 0; i < gpio_register_cnt; i++){
+		regids[i] = gpio_registers[i].car;
+	}
+
+	return print_ecp_msg(10, regids, gpio_register_cnt);
 }
