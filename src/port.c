@@ -19,7 +19,6 @@
 #include "ecproto.h"
 
 #include <avr/io.h>
-#include <avr/pgmspace.h>
 #include <stdbool.h>
 
 /* Registers used are A,B,C,D,F,G,H,J,K,L */
@@ -40,16 +39,13 @@ const struct gpio_register_t gpio_registers[] = {
 {&PORTL, &DDRL, &PINL, 'L' }
 };
 
-uint8_t gpio_register_cnt = sizeof(gpio_registers) / 
-	sizeof(struct gpio_register_t);
+#define gpio_register_cnt (sizeof(gpio_registers) / sizeof(struct gpio_register_t))
 
-unsigned char last_pin_states[sizeof(gpio_registers) / sizeof(struct 
-	gpio_register_t)];
+unsigned char last_pin_states[gpio_register_cnt];
 
-unsigned char actual_pin_states[sizeof(gpio_registers) / sizeof(struct 
-	gpio_register_t)];
+unsigned char actual_pin_states[gpio_register_cnt];
 
-int init_ports(){
+void init_ports(){
 	
 	/* Initialize all pins with default values */
 	for(size_t i = 0; i < gpio_register_cnt; i++){
@@ -60,7 +56,8 @@ int init_ports(){
 	
 	update_pins();
 
-	return save_ports();
+	save_ports();
+	return;
 }
 
 int update_pins(){

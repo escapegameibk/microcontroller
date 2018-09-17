@@ -22,5 +22,4 @@
 
 #define UART_BAUD_RATE 38400UL
 
-#define DEBUG 1
 #endif

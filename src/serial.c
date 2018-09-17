@@ -28,14 +28,16 @@
 #include <stdio.h>
         
 uint8_t recv_buf_master[BUFLEN_UART];
+	
+bool command_received = false;
+uint8_t recv_crsr_master = 0;
 
-int serial_init(){
+void serial_init(){
 
-	command_received = false;
-	recv_crsr_master = 0;
 	uart_init_master();
-        
-        return 0;
+        memset(recv_buf_master, 0, BUFLEN_UART);
+
+        return;
 }
 /*
  * the interrupt service routine for the uart controller
@@ -89,11 +91,6 @@ void uart_init_master(){
  
 	UCSR0B = (1<<RXEN0) | (1<<TXEN0) | (1 << RXCIE0);                /* Enable receive and transmit */
         UCSR0C = (1<<UCSZ01) | (1<<UCSZ00); /* 8 data bits, 1 stop bit */
-
-        /* Flush Receive-Buffers */
-        do{
-                UDR0;
-        }while( UCSR0A & (1<<RXC0) );
 
         return;
 }

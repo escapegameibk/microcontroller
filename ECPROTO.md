@@ -15,6 +15,13 @@ capable of using multiple hosts as "jump hosts". The documentation on this is a
 TODO. The basic principle is to use the distance in jump-hosts as the basis to
 address a host. 
 
+## Byte ordering
+
+The byteordering is LITTLE ENDIAN, which menas the first bit has the lowest rank.
+For more infomration on endiannes see this link:
+
+https://en.wikipedia.org/wiki/Endianness
+
 # Protocol
 
 The protocol is structured, that the very first byte sent is the total length of
@@ -26,7 +33,7 @@ after the action id is the action's payload. The payload may contain any data,
 but the total length of the frame is required to be less than 255 bytes in
 order to prevent the length byte to overflow, in which case the receiving party
 may trat any incoming data as an invalid frame. The ONLY case where a 0xFF byte
-is valid is inside of the checksum
+is valid is inside of the checksum.
 
 ## Sending and receiving
 

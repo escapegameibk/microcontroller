@@ -22,18 +22,38 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <avr/wdt.h>
 
+uint8_t mcusr_mirror __attribute__ ((section (".noinit")));
+void get_mcusr(void) \
+  __attribute__((naked)) \
+  __attribute__((section(".init3")));
+void get_mcusr(void)
+{
+  mcusr_mirror = MCUSR;
+  MCUSR = 0;
+  wdt_disable();
+}
 
 int routine();
 int main(){
+	
+	PORTB |= 1 << 7;
         
+	
 	cli();
 
         /* initialize the uart connection to the controller */
-	init_ports();
         serial_init();
+	
+	init_ports();
 	sei();
-        while(1){
+	
+	wdt_enable(WDTO_120MS);
+	
+        
+	while(1){
+		wdt_reset();
                 if(routine() < 0){
                 }
         }
@@ -52,7 +72,8 @@ int routine(){
                  */
                 cli(); /* < Disable interrupts */
 		parse_ecp_msg(recv_buf_master);
-                sei(); /* < Enable interrupts */
+		memset(recv_buf_master, 0, BUFLEN_UART);
+	        sei(); /* < Enable interrupts */
 		command_received = false;
         }
         return 0;

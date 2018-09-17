@@ -67,14 +67,23 @@ int parse_ecp_msg(const uint8_t* msg){
 			 * him. Has my master disappointed me? What has
 			 * happened, i don't understand. */
 		case 3:
+			/* ECP Enuerate action */
+			if(msg[ECP_LEN_IDX] <  1 + ECPROTO_OVERHEAD){
+				print_ecp_error("2 few parms");
+				return -3;
+			}
+
+			return ecp_enumerate(msg[2]);
+			break;
 		case 4:
 			/* TODO for daisychaining */
+			
 			break;
 		case 5:
 			/* Defines a port direction / writes to the ddr */
 			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
-				return -3;
+				return -4;
 			}
 			return print_success_reply(5, 
 				write_port_ddr(msg[2],msg[3], msg[5]) >= 0);
@@ -83,7 +92,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			/* Gets a port */
 			if(msg[0] <  2 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
-				return -4;
+				return -5;
 			}
 			
 			return print_ecp_pin_update(msg[2], msg[3], 
@@ -93,7 +102,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			/* Defines a port state / writes to the port */
 			if(msg[0] <  3 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
-				return -5;
+				return -6;
 			}
 
 			return print_success_reply(7,write_port(msg[2],msg[3], msg[4]) >= 0);
@@ -110,6 +119,12 @@ int parse_ecp_msg(const uint8_t* msg){
 
 	return 0;
 	
+}
+
+int ecp_enumerate(uint8_t recvd_id){
+	ecp_id = recvd_id;
+	uint8_t response[] = {ecp_id, 0x00};
+	return print_ecp_msg(ENUMERATEACTION,response, sizeof(response));
 }
 
 /* Please use this function as RARELY as possible. The AVR copies all of it's
@@ -141,7 +156,7 @@ int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){
 
 	static uint8_t frame[255];
 	
-	frame[0] = ECPROTO_OVERHEAD + payload_length;
+	frame[0] = ECPROTO_OVERHEAD + (payload_length / sizeof(uint8_t));
 	frame[1] = action_id;
 	memcpy(&frame[2], payload, payload_length);
 	uint16_t crc = ibm_crc(frame,frame[0] - 3);

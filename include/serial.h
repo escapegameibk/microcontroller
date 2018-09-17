@@ -32,7 +32,7 @@
 extern uint8_t recv_buf_master[];
 uint8_t recv_crsr_master;
 
-int serial_init();
+void serial_init();
 bool command_received;
 
 int write_frame_to_master(const uint8_t* frame);

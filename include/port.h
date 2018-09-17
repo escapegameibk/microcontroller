@@ -31,7 +31,7 @@ uint8_t gpio_register_cnt;
 extern unsigned char last_pin_states[];
 extern unsigned char actual_pin_states[];
 
-int init_ports();
+void init_ports();
 
 int update_pins();
 size_t get_port_update_count();
