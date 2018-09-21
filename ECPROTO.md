@@ -1,4 +1,5 @@
 %EC-Proto
+
 # About
 
 After doing some research on the stuff, the old protocol seemed unusable and a
@@ -9,11 +10,7 @@ master-slave based protocol.
 
 # Addressing
 
-THe protocol is a peer-to-peer protocol, and therefore is intentionally not
-able to address other than by the port pluged in, The protocol is however
-capable of using multiple hosts as "jump hosts". The documentation on this is a 
-TODO. The basic principle is to use the distance in jump-hosts as the basis to
-address a host. 
+The protocol is very well able to address a host, and therefore
 
 ## Byte ordering
 
@@ -25,15 +22,22 @@ https://en.wikipedia.org/wiki/Endianness
 # Protocol
 
 The protocol is structured, that the very first byte sent is the total length of
-the frame - 1, and the last byte sent is required to be 0xFF. A frame, where the
+the frame, and the last byte sent is required to be 0xFF. A frame, where the
 length byte, is not the index + 1 of a 0xFF byte, shoulde be considered invalid
-and should be discarded. The length is followed by an action id. Everything
-after the action id is the action's payload. The payload may contain any data,
-(except for the 0xFF byte, which should only be sent once in an entire frame)
-but the total length of the frame is required to be less than 255 bytes in
-order to prevent the length byte to overflow, in which case the receiving party
-may trat any incoming data as an invalid frame. The ONLY case where a 0xFF byte
-is valid is inside of the checksum.
+and should be discarded. The length is followed by an address.
+Afterwards an action id is sent. Everything after the action id is the action's
+payload. The payload may contain any data, (except for the 0xFF byte, which 
+should only be sent once in an entire frame)but the total length of the frame is
+required to be less than 255 bytes in order to prevent the length byte to 
+overflow, in which case the receiving party may trat any incoming data as an 
+invalid frame. The ONLY case where a 0xFF byte is valid is inside of the 
+checksum.
+
+## Zero padding
+
+The parameters may be zero padded in order to avoid the 0xff byte in the
+checksum. Zero padding is required to be supported on any action, independent of
+any hardware changes.
 
 ## Sending and receiving
 
@@ -47,9 +51,9 @@ The last 2 bytes before the 0xFF byte contain a crc-16 checksum. The crc version
 used should match the one of the CRC-16-IBM version and is also used in the
 modbus protocol and the usb protocol. The whole frame before the checksum is
 used as basisi for cecksum calculation. In case the checksum only consists of
-0x00 bytes, the responding side was too laszy to implement checksums, in which
+0x00 bytes, the responding side was too lazy to implement checksums, in which
 case a checksum comparison should be ommitted. The checksum may contain a 0xFF
-byte.
+byte, but it is discouraged to NOT implement zero padding.
 
 ## Action-IDs
 
@@ -61,7 +65,9 @@ This action id may ONLY be sent to initialize a connection. It may never be used
 to reactivate connection whatsoever. Any party may send this message at any time
 in case a device-crash happens, or something else, and the device has to be
 restarted. The device at the other end should now notify the device of it's
-configuration and purpose. No payload may be sent.
+configuration and purpose. No payload may be sent. The master is NOT required to
+send this message at init, neither is the slave. No answer on this message is
+required from any side.
 
 1. The request to send from the master. ID 0x01
 
@@ -69,7 +75,8 @@ This is sent periodically by the device
 closer to the host. It indicates, that the device on the other side may
 speak now, and has the chance to send all of it's messages. The device on the
 other side is now REQUIRED to respond. A timeout may be set by the master
-device in order to avoid errors. It's payload is empty.
+device in order to avoid errors. It's payload is empty, and it's reply consists
+of a message with the 0x02 or SEND NOTIFY message id.
 
 2. Send notify. ID 0x02
 
@@ -77,38 +84,22 @@ This is the intended response on a request to send or 0x01 action. It is sent
 by the slave device ONLY, because only a slave has to notify before sending.
 It's payload contains 1 byte indicating the amount of frames following this up.
 As there is no acknowledgement for this from the master, this has to be followed
-up by the specified amount of messages from the slave device. Any slave device
-connected in between the slave beeing a relay for this message, should also
-relay the specified amount of messages as defined in the payload following this
-message.
+up by the specified amount of messages from the slave device.
 
 3. Enumerate. ID 0x03
 
-The enumerate command is issued at startup. It is used to enumerate the
-connected devices. Every device should respond towards the host with 0x03 and
-the current id as 8 bit integer as payload. In case another device is connected,
-a slave should also respond to the devices with it's current id incremented by
-one, or the id of the following host. By this way, the amount of jump-hosts to
-the master is known. In case the device doesn't have another slave host 
-connected, it is required to respond with the enumerate action, and it's id and
-another 0x00 byte as payload. Via that means, the connection is considered
-enumerated, all devices have responded , and all connections are waiting for
-another command from the master. The payload from the master should be set to 
-0x00, which will also be the id of the first device, event though, ids are not
-used in that sense in a peer to peer connection, and as it isn't nescessary to
-enumerate the bus.
+This command is issued at startup or at connection initialisation. The first
+parameter is sent by the master without a payload. The slaves are required to
+respond with their ids in incremental order. The first device to respond has
+the id 0, the second 1, and so on. The device should all take a look at the
+previous frame, look at the previous frame sent, and if its own device number is
+the next one up, it should respond. The last device has to know, wether it is
+the last one, and should send it's own address as payload. Via that means, the
+bus is considred enumerated and normal operation is resumed.
 
-4. remote command. ID 0x04
+4. RESERVED. ID 0x04
 
-In case multiple hosts are connected, a 0x04 command may be sent, with the
-remote id as it's first payload, and afterwards an action and a payload. The
-slaves relaying the command may take a look at it's conetent, and if a slave
-has announced to send multiple other commands, slaves should be prepared to
-forward multiple mesages. If the id is the very next slave, the slave should
-create a new frame from the payload of the received message, and transmit it
-towards it's destination. The reply(s) by the destination shoud be encapsulated
-by the same slave who did the deencapsulattion, which means he should take the
-id, and the payload, create another 0x04 frame, and send it towards the master.
+This message is reserved for future use. 
 
 5. define port. ID 0x05
 

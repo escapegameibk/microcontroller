@@ -18,6 +18,7 @@
 #include "ecproto.h"
 #include "serial.h"
 #include "port.h"
+#include "general.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -31,6 +32,12 @@ int parse_ecp_msg(const uint8_t* msg){
 		 */
 		 print_ecp_error("invld frme len");
 		 return -1;
+	}
+
+	if(msg[ECP_ADDR_IDX] != ECP_DEVICE_ID && msg[ECP_ID_IDX] != 
+		ENUMERATEACTION){
+		/* None of my interest. */
+		return 0;
 	}
 
 	/* Perced to checksum calculation */
@@ -66,18 +73,30 @@ int parse_ecp_msg(const uint8_t* msg){
 			 * have to send my master in order to not disappoint
 			 * him. Has my master disappointed me? What has
 			 * happened, i don't understand. */
+			 break;
 		case 3:
 			/* ECP Enuerate action */
-			if(msg[ECP_LEN_IDX] <  1 + ECPROTO_OVERHEAD){
-				print_ecp_error("2 few parms");
-				return -3;
-			}
+#if ECP_DEVICE_ID==0
+			if(msg[ECP_ADDR_IDX] == ECP_DEVICE_ID){
 
-			return ecp_enumerate(msg[2]);
+				return ecp_enumerate();
+			}else{
+				/* I don't care. */
+				return 0;
+			}
+#else
+			if(msg[ECP_ADDR_IDX] == ECP_DEVICE_ID || 
+				msg[ECP_ADDR_IDX] == ECP_DEVICE_ID - 1){
+
+				return ecp_enumerate();
+			}else{
+				/* I don't care. */
+				return 0;
+			}
+#endif
 			break;
 		case 4:
-			/* TODO for daisychaining */
-			
+			/* RESERVED */	
 			break;
 		case 5:
 			/* Defines a port direction / writes to the ddr */
@@ -85,46 +104,64 @@ int parse_ecp_msg(const uint8_t* msg){
 				print_ecp_error("2 few parms");
 				return -4;
 			}
-			return print_success_reply(5, 
-				write_port_ddr(msg[2],msg[3], msg[5]) >= 0);
+			return print_success_reply(DEFINE_PORT_ACTION, 
+				write_port_ddr(msg[ECP_PAYLOAD_IDX],
+				msg[ECP_PAYLOAD_IDX + 1], 
+				msg[ECP_PAYLOAD_IDX + 2]) >= 0);
 			break;
 		case 6:
 			/* Gets a port */
-			if(msg[0] <  2 + ECPROTO_OVERHEAD){
+			if(msg[ECP_LEN_IDX] <  2 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
 				return -5;
 			}
 			
-			return print_ecp_pin_update(msg[2], msg[3], 
-				get_port_pin(msg[2], msg[3]));
+			return print_ecp_pin_update(msg[ECP_PAYLOAD_IDX], 
+				msg[ECP_PAYLOAD_IDX + 1], 
+				get_port_pin(msg[ECP_PAYLOAD_IDX], 
+				msg[ECP_PAYLOAD_IDX + 1]));
+
 			break;
 		case 7:
 			/* Defines a port state / writes to the port */
-			if(msg[0] <  3 + ECPROTO_OVERHEAD){
+			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
 				return -6;
 			}
 
-			return print_success_reply(7,write_port(msg[2],msg[3], msg[4]) >= 0);
+			return print_success_reply(7,
+				write_port(msg[ECP_PAYLOAD_IDX],
+				msg[ECP_PAYLOAD_IDX + 1], 
+				msg[ECP_PAYLOAD_IDX + 2]) >= 0);
 			break;
 		case 9:
 			/* Request the gpio register count. */
-			return print_ecp_msg(9, &gpio_register_cnt, 
+			return print_ecp_msg(REGISTER_COUNT, &gpio_register_cnt, 
 				sizeof(uint8_t));
 			break;
 		case 10:
 			/* Requested a list of register ids */
 			return print_port_ids();
+			break;
+		default:
+			print_ecp_error("not implmntd");
+			return -1;
+			break;
+			
 	}
 
 	return 0;
 	
 }
 
-int ecp_enumerate(uint8_t recvd_id){
-	ecp_id = recvd_id;
-	uint8_t response[] = {ecp_id, 0x00};
-	return print_ecp_msg(ENUMERATEACTION,response, sizeof(response));
+int ecp_enumerate(){
+
+	if(ECP_LAST_DEV){
+		uint8_t response[] = {ECP_DEVICE_ID};
+		return print_ecp_msg(ENUMERATEACTION,response, sizeof(response));
+	}else{
+		return print_ecp_msg(ENUMERATEACTION,NULL, 0);
+	}
 }
 
 /* Please use this function as RARELY as possible. The AVR copies all of it's
@@ -144,7 +181,7 @@ int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target){
 	}
 
 	uint8_t pay[] = {(uint8_t)reg_id, bit_id, target};
-	return print_ecp_msg(0x06, pay, sizeof(pay));
+	return print_ecp_msg(GET_PORT_ACTION, pay, sizeof(pay));
 }
 
 int print_success_reply(uint8_t action_id, bool success){
@@ -155,14 +192,36 @@ int print_success_reply(uint8_t action_id, bool success){
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){
 
 	static uint8_t frame[255];
+	memset(frame,0, 255);
 	
-	frame[0] = ECPROTO_OVERHEAD + (payload_length / sizeof(uint8_t));
-	frame[1] = action_id;
-	memcpy(&frame[2], payload, payload_length);
-	uint16_t crc = ibm_crc(frame,frame[0] - 3);
-	frame[frame[0] - 3] = (crc >> 8) & 0xFF;
-	frame[frame[0] - 2] = crc & 0xFF;
-	frame[frame[0] - 1] = 0xFF;
+	frame[ECP_LEN_IDX] = ECPROTO_OVERHEAD + payload_length;
+	frame[ECP_ADDR_IDX] = ECP_DEVICE_ID;
+	frame[ECP_ID_IDX] = action_id;
+	memcpy(&frame[ECP_PAYLOAD_IDX], payload, payload_length);
+	uint16_t crc = 0;
+
+	uint8_t crc_low, crc_high;
+
+	for(size_t ov = 0; ov < ( 255 - payload_length); ov++){
+		
+		crc = ibm_crc(frame,frame[0] - 3);
+		crc_high = (crc >> 8) & 0xFF;
+		crc_low = crc & 0xFF;
+		if(crc_high == 0xFF || crc_low == 0xFF){
+			
+			frame[ECP_LEN_IDX]++;
+			continue;
+		}else{
+			/* No 0xff bytes have ben found inside the checksum.
+			 * Stop 0-padding the frame */
+			break;
+		}
+	}
+
+		
+	frame[frame[ECP_LEN_IDX] - 3] = (crc >> 8) & 0xFF;
+	frame[frame[ECP_LEN_IDX] - 2] = crc & 0xFF;
+	frame[frame[ECP_LEN_IDX] - 1] = 0xFF;
 
 	return write_frame_to_master(frame);
 }

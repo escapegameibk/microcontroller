@@ -18,8 +18,13 @@
 #ifndef DATA_H
 #define DATA_H
 
+#include <stdbool.h>
+
 #define F_CPU 16000000
 
 #define UART_BAUD_RATE 38400UL
+
+#define ECP_DEVICE_ID 0
+#define ECP_LAST_DEV true
 
 #endif

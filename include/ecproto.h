@@ -22,7 +22,7 @@
  * therefore is length, action, checksum and termination byte.
  */
 
-#define ECPROTO_OVERHEAD 5
+#define ECPROTO_OVERHEAD 6
 
 #include <stdint.h>
 #include <stddef.h>
@@ -30,7 +30,7 @@
 
 int parse_ecp_msg(const uint8_t* msg);
 
-int ecp_enumerate(uint8_t recvd_id);
+int ecp_enumerate();
 int print_ecp_error(char* string);
 int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target);
 int print_success_reply(uint8_t action_id, bool success);
@@ -38,8 +38,6 @@ int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length);
 
 uint16_t ibm_crc(const uint8_t* data, size_t len);
 int process_updates();
-
-uint8_t ecp_id;
 
 #define INIT_ACTION 0
 #define REQ_SEND 1
@@ -50,9 +48,12 @@ uint8_t ecp_id;
 #define GET_PORT_ACTION 6
 #define WRITE_PORT_ACTION 7
 #define ERROR_ACTION 8
+#define REGISTER_COUNT 9
 
 #define ECP_LEN_IDX 0
-#define ECP_ID_IDX 1
+#define ECP_ADDR_IDX 1
+#define ECP_ID_IDX 2
+#define ECP_PAYLOAD_IDX 3
 
 #endif /* ECPROTO_H */
 
