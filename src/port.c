@@ -21,22 +21,26 @@
 #include <avr/io.h>
 #include <stdbool.h>
 
-/* Registers used are A,B,C,D,F,G,H,J,K,L */
+/* Registers used are A,B,C,D,E,F,G,H,J,K,L */
 const struct gpio_register_t gpio_registers[] = {
 {&PORTA, &DDRA, &PINA, 'A' },
 {&PORTB, &DDRB, &PINB, 'B' },
 {&PORTC, &DDRC, &PINC, 'C' },
 {&PORTD, &DDRD, &PIND, 'D' },
-#if 0
-/* Done in order to protect the uart pins */
 {&PORTE, &DDRE, &PINE, 'E' },
-#endif
 {&PORTF, &DDRF, &PINF, 'F' },
 {&PORTG, &DDRG, &PING, 'G' },
 {&PORTH, &DDRH, &PINH, 'H' },
 {&PORTJ, &DDRJ, &PINJ, 'J' },
 {&PORTK, &DDRK, &PINK, 'K' },
 {&PORTL, &DDRL, &PINL, 'L' }
+};
+
+const struct gpio_pin_t gpio_disabled_pins[] ={
+{'E', 0},	/* USART0 RXD */
+{'E', 1},	/* USART0 TXD */
+{'H', 0},	/* USART2 RXD */
+{'H', 1}	/* USART2 TXD */
 };
 
 #define gpio_register_cnt (sizeof(gpio_registers) / sizeof(struct gpio_register_t))
@@ -148,6 +152,11 @@ int write_port(char id, uint8_t bit, bool value){
 		/* Too high bit */
 		return -2;
 	}
+	
+	if(is_pin_blacklisted(id, bit)){
+		/* Not allowed to write to pin */
+		return -3;
+	}
 
 	/* Should be fine */
 	if(!!value){
@@ -170,6 +179,11 @@ int write_port_ddr(char id, uint8_t bit, bool value){
 	if(bit >= 8){
 		/* Too high bit */
 		return -2;
+	}
+
+	if(is_pin_blacklisted(id, bit)){
+		/* Not allowed to write to pin */
+		return -3;
 	}
 
 	if(!!value){
@@ -203,4 +217,15 @@ int print_port_ids(){
 	}
 
 	return print_ecp_msg(10, regids, gpio_register_cnt);
+}
+
+bool is_pin_blacklisted(char car, uint8_t id){
+
+	for(size_t i = 0; i < sizeof(gpio_disabled_pins); i++){
+		if( gpio_disabled_pins[i].car == car && 
+			gpio_disabled_pins[i].pin == id){
+			return true;
+		}
+	}
+	return false;
 }

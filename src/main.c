@@ -37,19 +37,23 @@ void get_mcusr(void)
 
 int routine();
 int main(){
-	
-	PORTB |= 1 << 7;
-        
-	
+
+	/* Disable interrupts during initialisation phase */	
 	cli();
 
-        /* initialize the uart connection to the controller */
+	/* Done first in order to allow future override of the UART pins, and
+	 * any other pins */
+	init_ports();
+
+	/* initialize the uart connection to the controller */
         serial_init();
 	
-	init_ports();
 	sei();
-	
-	wdt_enable(WDTO_120MS);
+	/* Enable the hardware watchdog. In case the microcontroller fails to 
+	 * finish it's task within the specified time, the watchdog will reset
+	 * the atmel cookie.
+	 */
+	wdt_enable(WDTO_4S);
 	
         
 	while(1){

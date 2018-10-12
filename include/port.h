@@ -26,6 +26,11 @@ struct gpio_register_t{
 	char car;
 };
 
+struct gpio_pin_t{
+	char car;
+	uint8_t pin; /* [0; 8[ */
+};
+
 uint8_t gpio_register_cnt;
 
 extern unsigned char last_pin_states[];
@@ -43,3 +48,4 @@ int write_port_ddr(char id, uint8_t bit, bool value);
 /* Returns 0 for low, 1 for high, and > 1 on error */
 uint8_t get_port_pin(char id, uint8_t bit);
 int print_port_ids();
+bool is_pin_blacklisted(char car, uint8_t id);
