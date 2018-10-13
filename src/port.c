@@ -51,13 +51,7 @@ unsigned char actual_pin_states[gpio_register_cnt];
 
 void init_ports(){
 	
-	/* Initialize all pins with default values */
-	for(size_t i = 0; i < gpio_register_cnt; i++){
-		struct gpio_register_t reg = gpio_registers[i];
-		*reg.ddir = 0xFF;
-		*reg.port = 0x00;
-	}
-	
+	/* Query pins for their default values */
 	update_pins();
 
 	save_ports();
@@ -218,7 +212,9 @@ int print_port_ids(){
 
 	return print_ecp_msg(10, regids, gpio_register_cnt);
 }
-
+/*
+ * Returns true on blacklist and 1 if not
+*/
 bool is_pin_blacklisted(char car, uint8_t id){
 
 	for(size_t i = 0; i < sizeof(gpio_disabled_pins); i++){

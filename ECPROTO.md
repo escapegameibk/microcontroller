@@ -6,16 +6,17 @@ After doing some research on the stuff, the old protocol seemed unusable and a
 bit idiotic. It was deemed nescessary to rebuild it from scratch. The protocol
 was designed to be as flexile as possible, whilest keeping it simple stupid. The
 result was the EC-proto, which stands for escape the protocol, which is a 
-master-slave based protocol.
+master-slave based protocol. It may be driven over any layer 2 connection.
 
 # Addressing
 
-The protocol is very well able to address a host, and therefore
+The protocol is very well able to address a host, and therefore no buffering
+or any such thing is required. The address is always the SECOND bit transferred.
 
 ## Byte ordering
 
-The byteordering is LITTLE ENDIAN, which menas the first bit has the lowest rank.
-For more infomration on endiannes see this link:
+The byteordering is LITTLE ENDIAN, which menas the first bit has the highest 
+rank. For more infomration on endiannes see this link:
 
 https://en.wikipedia.org/wiki/Endianness
 
@@ -32,6 +33,33 @@ required to be less than 255 bytes in order to prevent the length byte to
 overflow, in which case the receiving party may trat any incoming data as an 
 invalid frame. The ONLY case where a 0xFF byte is valid is inside of the 
 checksum.
+
+# Speed
+
+The protocol may run on any layer of the osi layer model. The protocol itself
+doesn't really care about speed, but the protocol is mostly run on layer 2, so
+the hardware has to set the speed. This is for UART:
+
+The speed has been chosen to be compatiable with most Integrated circuits,
+operating systems and to ensure no data is lost in transmission: 38400 Baud or
+38400 bits/second. Please don't increase this speed. Only 1 stop bit is
+required and 8 data bits are transferred at once. As the protocol brings it's
+own checksum with it, there is no parity bit used. Please see the src/serial.c
+file of the microcontroller repository, or the src/ecproto.c file of the host
+repostiroy for further details.
+
+# Example frames
+
+Here are a few example frames:
+
+1. The master initializing a enumeration action:
+	0x06 0x00 0x03 0x3B 0x40 0xFF
+
+2. The slave responding to a enumeration action whilest beeing the last slave
+	0x06 0x00 0x03 0x00 0x00 0x2E 0xFF
+
+3. The master requesting device 0 register A pin 7
+	0x06 0x00 0x6 0x00 0x41 0x07 0xD3 0xB1 0xFF
 
 ## Zero padding
 
@@ -149,3 +177,22 @@ Request a list of gpio register IDs. The master may send this request. It's
 payload is empty. The slave should respond with a message with the same id and
 with the id-list as payload. A null-termination is not required.
 
+11. Request gpio pin state 0x0A
+
+Request wther the requested gpio pin is enabled or not. This action takes
+2 parameters: the register id, and the bit. It returns a frame with the same
+id and 3 paramters: the register id, the bit, and the pin state. The pin state
+should be 0 if the pin is disabled, and 1 if the pin is enabled.
+
+# ERRATA
+
+An errat, or things known to be wrong or have gone wrong in the past.
+
+## The baud rate problem
+
+Well as you maynow see in the documentation, the default baud rate for the ecp-
+bus is 38400 baud. It was previously set to 115200 baud... Then i had a glimpse
+at the atmel datasheet forthe atmega 2560.  There is a table in the usart 
+section of the datasheet of the atmel, and found out, that eith a 16MHz 
+oszillator the error on transmission is ~ -3%, which makes the uart connection
+drop some frames. The baud rate was then shrunk to 

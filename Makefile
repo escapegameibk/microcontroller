@@ -6,9 +6,11 @@ CCC := avr-g++
 RM_RF = rm -rf
 OCPY := avr-objcopy
 AVRDUDE := avrdude
-PORT := /dev/ttyACM0
+#PORT := /dev/ttyACM0
+PORT := usb
 BOARD := atmega2560
-PROGRAMMER := wiring
+#PROGRAMMER := wiring
+PROGRAMMER := usbasp
 PROGBOARD := m2560
 BAUD_RATE_PROG := 115200
 FLASH_CMD := $(AVRDUDE) -b $(BAUD_RATE_PROG) -p $(PROGBOARD) -D -P $(PORT) -c $(PROGRAMMER) 
@@ -50,8 +52,9 @@ $(TARGET_ELF): $(OBJFILES)
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<                              
 
-flash: $(TARGET_ELF)
-	$(FLASH_CMD) -U flash:w:$^:e
-	$(FLASH_CMD) -U flash:v:$^:e
+flash: $(TARGET)
+	$(FLASH_CMD) -e  -U hfuse:w:0x99:m -U lfuse:w:0xDF:m -U efuse:w:0xFF:m -U flash:w:$^:i  
+	#$(FLASH_CMD) -U flash:w:$^:i 
+	$(FLASH_CMD) -U flash:v:$^:i
 clean:                                                                          
 	$(RM_RF) $(DIRS_TARGET)     

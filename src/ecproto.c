@@ -143,6 +143,27 @@ int parse_ecp_msg(const uint8_t* msg){
 			/* Requested a list of register ids */
 			return print_port_ids();
 			break;
+		case 11:
+			/* Request wether the given pin is disabled or not */
+		{
+			if(msg[ECP_LEN_IDX] < 2 + ECPROTO_OVERHEAD){
+				print_ecp_error("2 few parms");
+				return -7;
+			}
+			uint8_t pay[] = {msg[ECP_PAYLOAD_IDX], 
+				msg[ECP_PAYLOAD_IDX + 1], 
+				!is_pin_blacklisted(msg[ECP_PAYLOAD_IDX], 
+					msg[ECP_PAYLOAD_IDX + 1])};
+				
+				/* The pin blacklist function is inverted, 
+				 * because it returns true if the pin is 
+				 * blacklisted and false if not. The action
+				 * querys wther the pin is enabled. Therefore
+				 * the state should be inverted
+				 */
+			return print_ecp_msg(11,pay ,sizeof(pay) );
+		}
+			break;
 		default:
 			print_ecp_error("not implmntd");
 			return -1;
@@ -188,6 +209,7 @@ int print_success_reply(uint8_t action_id, bool success){
 	uint8_t suc = success;
 	return print_ecp_msg(action_id, &suc, sizeof(suc));
 }
+
 
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){
 
