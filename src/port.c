@@ -37,10 +37,12 @@ const struct gpio_register_t gpio_registers[] = {
 };
 
 const struct gpio_pin_t gpio_disabled_pins[] ={
-{'E', 0},	/* USART0 RXD */
-{'E', 1},	/* USART0 TXD */
+#ifdef UART_SECONDARY
 {'H', 0},	/* USART2 RXD */
-{'H', 1}	/* USART2 TXD */
+{'H', 1},	/* USART2 TXD */
+#endif /* UART_SECONDARY */
+{'E', 0},	/* USART0 RXD */
+{'E', 1}	/* USART0 TXD */
 };
 
 #define gpio_register_cnt (sizeof(gpio_registers) / sizeof(struct gpio_register_t))
@@ -213,12 +215,13 @@ int print_port_ids(){
 	return print_ecp_msg(10, regids, gpio_register_cnt);
 }
 /*
- * Returns true on blacklist and 1 if not
+ * Returns true on blacklist and false if not
 */
 bool is_pin_blacklisted(char car, uint8_t id){
 
-	for(size_t i = 0; i < sizeof(gpio_disabled_pins); i++){
-		if( gpio_disabled_pins[i].car == car && 
+	for(size_t i = 0; i < (sizeof(gpio_disabled_pins) / 
+		sizeof(struct gpio_pin_t)); i++){
+		if( gpio_disabled_pins[i].car == car &&
 			gpio_disabled_pins[i].pin == id){
 			return true;
 		}

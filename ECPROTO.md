@@ -177,12 +177,20 @@ Request a list of gpio register IDs. The master may send this request. It's
 payload is empty. The slave should respond with a message with the same id and
 with the id-list as payload. A null-termination is not required.
 
-11. Request gpio pin state 0x0A
+11. Request gpio pin state 0x0B
 
 Request wther the requested gpio pin is enabled or not. This action takes
 2 parameters: the register id, and the bit. It returns a frame with the same
 id and 3 paramters: the register id, the bit, and the pin state. The pin state
 should be 0 if the pin is disabled, and 1 if the pin is enabled.
+
+12. Print string to secondary connection 0x0C
+
+Print some string to a secondary serial connection. Where and what the secondary 
+connection is is implementaion defined. It may be anything. It takes as a
+parameter a null terminated string, and transfers it to the secondary 
+connection. The NULL-Terminator is NOT transmitted. Its response consists of a
+frame with the same id and a boolean indicating success as a payload.
 
 # ERRATA
 

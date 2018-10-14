@@ -53,13 +53,13 @@ int parse_ecp_msg(const uint8_t* msg){
 	 * validating it's logic. */
 	switch(msg[ECP_ID_IDX]){
 		
-		case 0:
+		case INIT_ACTION:
 			/* I don't know why i got this message, but it's not my
 			 * purpose to respond to it. The master will probably
 			 * notify me of my purpose anyway.
 			 */
 			break;
-		case 1:
+		case REQ_SEND:
 
 			/* I have to send now all update messages that i have.
 			 * I should first reply with a send notify to my master,
@@ -68,13 +68,13 @@ int parse_ecp_msg(const uint8_t* msg){
 			 */
 			 return process_updates();
 			 break; /* Just in case :D */
-		case 2:
+		case SEND_NOTIFY:
 			/* Ähhm i shouldn't receive that. This is only what i
 			 * have to send my master in order to not disappoint
 			 * him. Has my master disappointed me? What has
 			 * happened, i don't understand. */
 			 break;
-		case 3:
+		case ENUMERATEACTION:
 			/* ECP Enuerate action */
 #if ECP_DEVICE_ID==0
 			if(msg[ECP_ADDR_IDX] == ECP_DEVICE_ID){
@@ -95,10 +95,10 @@ int parse_ecp_msg(const uint8_t* msg){
 			}
 #endif
 			break;
-		case 4:
+		case REMOTE_COMMAND:
 			/* RESERVED */	
 			break;
-		case 5:
+		case DEFINE_PORT_ACTION:
 			/* Defines a port direction / writes to the ddr */
 			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
@@ -109,7 +109,7 @@ int parse_ecp_msg(const uint8_t* msg){
 				msg[ECP_PAYLOAD_IDX + 1], 
 				msg[ECP_PAYLOAD_IDX + 2]) >= 0);
 			break;
-		case 6:
+		case GET_PORT_ACTION:
 			/* Gets a port */
 			if(msg[ECP_LEN_IDX] <  2 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
@@ -122,7 +122,7 @@ int parse_ecp_msg(const uint8_t* msg){
 				msg[ECP_PAYLOAD_IDX + 1]));
 
 			break;
-		case 7:
+		case WRITE_PORT_ACTION:
 			/* Defines a port state / writes to the port */
 			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
@@ -134,16 +134,16 @@ int parse_ecp_msg(const uint8_t* msg){
 				msg[ECP_PAYLOAD_IDX + 1], 
 				msg[ECP_PAYLOAD_IDX + 2]) >= 0);
 			break;
-		case 9:
+		case REGISTER_COUNT:
 			/* Request the gpio register count. */
 			return print_ecp_msg(REGISTER_COUNT, &gpio_register_cnt, 
 				sizeof(uint8_t));
 			break;
-		case 10:
+		case REGITER_LIST:
 			/* Requested a list of register ids */
 			return print_port_ids();
 			break;
-		case 11:
+		case PIN_ENABLED:
 			/* Request wether the given pin is disabled or not */
 		{
 			if(msg[ECP_LEN_IDX] < 2 + ECPROTO_OVERHEAD){
@@ -161,9 +161,25 @@ int parse_ecp_msg(const uint8_t* msg){
 				 * querys wther the pin is enabled. Therefore
 				 * the state should be inverted
 				 */
-			return print_ecp_msg(11,pay ,sizeof(pay) );
+			return print_ecp_msg(11, pay ,sizeof(pay) );
 		}
+		break;
+#ifdef UART_SECONDARY
+		
+		case SECONDARY_PRINT:
+			if(msg[msg[ECP_LEN_IDX] - 4] != 0){
+				print_ecp_error("nonull");
+				return -8;		
+			}
+			{
+				uint8_t success = 0>=write_string_to_secondary(
+					(char*)&msg[ECP_PAYLOAD_IDX]);
+				return print_ecp_msg(SECONDARY_PRINT, &success,
+					sizeof(uint8_t));
+			}
+
 			break;
+#endif
 		default:
 			print_ecp_error("not implmntd");
 			return -1;

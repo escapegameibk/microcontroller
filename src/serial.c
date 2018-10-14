@@ -35,6 +35,10 @@ uint8_t recv_crsr_master = 0;
 void serial_init(){
 
 	uart_init_master();
+#ifdef UART_SECONDARY
+
+	uart_init_2();
+#endif /* UART_SECONDARY */
         memset(recv_buf_master, 0, BUFLEN_UART);
 
         return;
@@ -48,7 +52,8 @@ ISR(USART0_RX_vect){
 	
 	recv_buf_master[recv_crsr_master++] = UDR0;
 	
-	if(recv_buf_master[recv_crsr_master - 1] == CMD_DELIMITER && recv_buf_master[ECP_LEN_IDX] <= recv_crsr_master + 1){
+	if(recv_buf_master[recv_crsr_master - 1] == CMD_DELIMITER && 
+		recv_buf_master[ECP_LEN_IDX] <= recv_crsr_master + 1){
 		recv_crsr_master = 0;
 		command_received = true;
 	}
@@ -94,3 +99,49 @@ void uart_init_master(){
 
         return;
 }
+
+#ifdef UART_SECONDARY
+int write_string_to_secondary(const char* str){
+	
+	for(uint8_t i = 0; str[i] != '\0'; i++){
+		
+		while( !(UCSR2A & (1<<UDRE2)) ); /* Wait for UDR to get ready */
+		UDR2 = str[i];			/* send */
+	}
+
+	return 0;
+
+}
+
+void uart_init_2(){
+
+#if 0
+	/* This is the original version of the algorithm used to calculate
+	 * the uart baud rate register value by goliath. It was not able to
+	 * handle higher baud rates. */
+	uint16_t ubrr = (uint16_t) ( (uint32_t)F_CPU/(16*
+		UART_SECONDARY_BAUD_RATE) - 1 );
+#else
+	/* This was copied from the source code of the arduino avr core. Please
+	 * take a look ath their source for more information:
+	 * https://github.com/arduino/ArduinoCore-avr/blob/master/cores/arduino/HardwareSerial.cpp
+	 * Line: 120.
+	 * Date: 2018/09/08
+	 */
+
+	uint16_t ubrr = (uint16_t) (((uint32_t) F_CPU / 8 / 
+		UART_SECONDARY_BAUD_RATE - 1) / 2 );
+
+#endif
+
+        /* Set the baud rate */
+        UBRR2H = (unsigned char)(ubrr>>8);
+        UBRR2L = (unsigned char) ubrr;
+ 
+	UCSR2B = (1<<RXEN2) | (1<<TXEN2) | (1 << RXCIE2);                /* Enable receive and transmit */
+        UCSR2C = (1<<UCSZ21) | (1<<UCSZ20); /* 8 data bits, 1 stop bit */
+
+        return;
+}
+
+#endif /* UART_SECONDARY */

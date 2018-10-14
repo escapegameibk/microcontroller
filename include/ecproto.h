@@ -41,7 +41,7 @@ int process_updates();
 
 #define INIT_ACTION 0
 #define REQ_SEND 1
-#define SEND_NTOIFY 2
+#define SEND_NOTIFY 2
 #define ENUMERATEACTION 3
 #define REMOTE_COMMAND 4
 #define DEFINE_PORT_ACTION 5
@@ -49,6 +49,9 @@ int process_updates();
 #define WRITE_PORT_ACTION 7
 #define ERROR_ACTION 8
 #define REGISTER_COUNT 9
+#define REGITER_LIST 10
+#define	PIN_ENABLED 11
+#define SECONDARY_PRINT 12
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
