@@ -34,6 +34,9 @@ int ecp_enumerate();
 int print_ecp_error(char* string);
 int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target);
 int print_success_reply(uint8_t action_id, bool success);
+#ifdef ANALOG
+int print_adc();
+#endif /* ANALOG */
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length);
 
 uint16_t ibm_crc(const uint8_t* data, size_t len);
@@ -49,9 +52,10 @@ int process_updates();
 #define WRITE_PORT_ACTION 7
 #define ERROR_ACTION 8
 #define REGISTER_COUNT 9
-#define REGITER_LIST 10
+#define REGISTER_LIST 10
 #define	PIN_ENABLED 11
 #define SECONDARY_PRINT 12
+#define ADC_GET 13
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1

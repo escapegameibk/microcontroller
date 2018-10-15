@@ -48,7 +48,11 @@ void serial_init(){
  * it ready 1 byte and saves it at the end of the buffer. On revceive
  * completion, the command received flag is set to true. 
  */
+#ifdef __AVR_ATmega2560__
 ISR(USART0_RX_vect){
+#elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
+ISR(USART_RX_vect){	
+#endif /* ATMEGA TYPE SWITCH */
 	
 	recv_buf_master[recv_crsr_master++] = UDR0;
 	
@@ -98,6 +102,7 @@ void uart_init_master(){
         UCSR0C = (1<<UCSZ01) | (1<<UCSZ00); /* 8 data bits, 1 stop bit */
 
         return;
+
 }
 
 #ifdef UART_SECONDARY
@@ -138,7 +143,7 @@ void uart_init_2(){
         UBRR2H = (unsigned char)(ubrr>>8);
         UBRR2L = (unsigned char) ubrr;
  
-	UCSR2B = (1<<RXEN2) | (1<<TXEN2) | (1 << RXCIE2);                /* Enable receive and transmit */
+	UCSR2B = (1<<RXEN2) | (1<<TXEN2);                /* Enable receive and transmit */
         UCSR2C = (1<<UCSZ21) | (1<<UCSZ20); /* 8 data bits, 1 stop bit */
 
         return;

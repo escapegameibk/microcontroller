@@ -139,7 +139,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			return print_ecp_msg(REGISTER_COUNT, &gpio_register_cnt, 
 				sizeof(uint8_t));
 			break;
-		case REGITER_LIST:
+		case REGISTER_LIST:
 			/* Requested a list of register ids */
 			return print_port_ids();
 			break;
@@ -179,7 +179,17 @@ int parse_ecp_msg(const uint8_t* msg){
 			}
 
 			break;
-#endif
+
+#endif /* UART_SECONDARY */
+#ifdef ANALOG_EN
+		case ADC_GET:
+			{
+				uint8_t adc_res = get_adc();
+				return print_ecp_msg(ADC_GET, &adc_res, 
+					sizeof(adc_res));
+			}
+			break;
+#endif /* ANALOG_EN */
 		default:
 			print_ecp_error("not implmntd");
 			return -1;
@@ -226,6 +236,13 @@ int print_success_reply(uint8_t action_id, bool success){
 	return print_ecp_msg(action_id, &suc, sizeof(suc));
 }
 
+#ifdef ANALOG
+int print_adc(){
+	uint8_t adc = get_adc_result();
+	return print_ecp_msg(ADC_GET, &adc, sizeof(adc));
+}
+
+#endif /* ANALOG */
 
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){
 

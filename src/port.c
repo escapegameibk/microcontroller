@@ -21,6 +21,13 @@
 #include <avr/io.h>
 #include <stdbool.h>
 
+/* According to https://www.microchip.com/webdoc/AVRLibcReferenceManual/using_tools_1using_avr_gcc_mach_opt.html 
+ * the used preprocessor definitions may be used to identify an AVR chip. The
+ * ports are specified according to their datasheet from atmel. Microchip is
+ * a bit awkward. 
+ */
+
+#ifdef __AVR_ATmega2560__ 
 /* Registers used are A,B,C,D,E,F,G,H,J,K,L */
 const struct gpio_register_t gpio_registers[] = {
 {&PORTA, &DDRA, &PINA, 'A' },
@@ -35,15 +42,43 @@ const struct gpio_register_t gpio_registers[] = {
 {&PORTK, &DDRK, &PINK, 'K' },
 {&PORTL, &DDRL, &PINL, 'L' }
 };
+#endif
+
+#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
+/* The atmega328 series only has three gpio registers */
+const struct gpio_register_t gpio_registers[] = {
+{&PORTB, &DDRB, &PINB, 'B' },
+{&PORTC, &DDRC, &PINC, 'C' },
+{&PORTD, &DDRD, &PIND, 'D' }
+};
+
+#endif
+
+#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 
 const struct gpio_pin_t gpio_disabled_pins[] ={
-#ifdef UART_SECONDARY
+#if  defined (UART_SECONDARY)
+{'H', 0},	/* USART2 RXD */
+{'H', 1},	/* USART2 TXD */
+#endif /* UART_SECONDARY */
+#ifdef ANALOG_EN
+{'F', 0},	/* Analog input */
+#endif /* ANALOG_EN */
+{'E', 0},	/* USART0 RXD */
+{'E', 1}	/* USART0 TXD */
+};
+#endif
+
+#ifdef __AVR_ATmega2560__ 
+const struct gpio_pin_t gpio_disabled_pins[] ={
+#if  defined (UART_SECONDARY)
 {'H', 0},	/* USART2 RXD */
 {'H', 1},	/* USART2 TXD */
 #endif /* UART_SECONDARY */
 {'E', 0},	/* USART0 RXD */
 {'E', 1}	/* USART0 TXD */
 };
+#endif
 
 #define gpio_register_cnt (sizeof(gpio_registers) / sizeof(struct gpio_register_t))
 
@@ -55,8 +90,10 @@ void init_ports(){
 	
 	/* Query pins for their default values */
 	update_pins();
-
 	save_ports();
+
+	ADCSRA = (1<<ADEN) | (1<<ADPS2);
+	ADMUX  = (1<<ADLAR) | (1<<REFS0);    // Left-adjust, Ref. = AVCC
 	return;
 }
 
@@ -228,3 +265,17 @@ bool is_pin_blacklisted(char car, uint8_t id){
 	}
 	return false;
 }
+
+#ifdef ANALOG_EN
+uint8_t get_adc(){
+
+	ADCSRA |= (1<<ADSC);
+	while((ADCSRA >> ADSC) & 0x1){ /* Conversion in progress*/}
+	uint8_t val = ADCH;
+	if(val == 0xFF){
+		val--;
+	}
+
+	return val;
+}
+#endif /* ANALOG_EN */

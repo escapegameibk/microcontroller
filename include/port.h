@@ -49,3 +49,6 @@ int write_port_ddr(char id, uint8_t bit, bool value);
 uint8_t get_port_pin(char id, uint8_t bit);
 int print_port_ids();
 bool is_pin_blacklisted(char car, uint8_t id);
+#ifdef ANALOG_EN
+uint8_t get_adc();
+#endif /* ANALOG_EN */

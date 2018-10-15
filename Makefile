@@ -6,14 +6,16 @@ CCC := avr-g++
 RM_RF = rm -rf
 OCPY := avr-objcopy
 AVRDUDE := avrdude
-#PORT := /dev/ttyACM0
+#PORT := /dev/ttyUSB2
 PORT := usb
 BOARD := atmega2560
-#PROGRAMMER := wiring
+#PROGRAMMER := arduino
 PROGRAMMER := usbasp
 PROGBOARD := m2560
 BAUD_RATE_PROG := 115200
-FLASH_CMD := $(AVRDUDE) -b $(BAUD_RATE_PROG) -p $(PROGBOARD) -D -P $(PORT) -c $(PROGRAMMER) 
+FLASH_CMD := $(AVRDUDE) -b $(BAUD_RATE_PROG) -p $(PROGBOARD) -D -P $(PORT) -c $(PROGRAMMER)
+AVRSIZE := avr-size
+AVRSIZE_FLAGS := -C --mcu=$(PROGBOARD)
 
 # directories
 CWD := $(realpath .)
@@ -23,7 +25,7 @@ SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-CFLAGS := -mmcu=$(BOARD) -Os -I$(INCLUDEDIR) -Wall -Wextra -D UART_SECONDARY
+CFLAGS := -mmcu=$(BOARD) -Os -I$(INCLUDEDIR) -Wall -Wextra -D UART_SECONDARY -D ANALOG_EN
 LDFLAGS := -mmcu=$(BOARD)
 
 # target files
@@ -48,12 +50,13 @@ $(TARGET) : $(TARGET_ELF)
 
 $(TARGET_ELF): $(OBJFILES)
 	$(CC) $(LDFLAGS) -o $@  $^
+	 $(AVRSIZE) $(AVRSIZE_FLAGS) $@
  
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<                              
 
 flash: $(TARGET)
-	$(FLASH_CMD) -e  -U hfuse:w:0x99:m -U lfuse:w:0xDF:m -U efuse:w:0xFF:m -U flash:w:$^:i  
+	$(FLASH_CMD) -e  -U hfuse:w:0xD9:m -U lfuse:w:0xDF:m -U efuse:w:0xFF:m -U flash:w:$^:i  
 	#$(FLASH_CMD) -U flash:w:$^:i 
 	$(FLASH_CMD) -U flash:v:$^:i
 clean:                                                                          
