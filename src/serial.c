@@ -32,6 +32,8 @@ uint8_t recv_buf_master[BUFLEN_UART];
 bool command_received = false;
 uint8_t recv_crsr_master = 0;
 
+unsigned long long int master_serial_timeout = 0;
+
 void serial_init(){
 
 	uart_init_master();
@@ -39,8 +41,8 @@ void serial_init(){
 
 	uart_init_2();
 #endif /* UART_SECONDARY */
-        memset(recv_buf_master, 0, BUFLEN_UART);
 
+	clear_master_buffer();
         return;
 }
 /*
@@ -55,13 +57,20 @@ ISR(USART_RX_vect){
 #endif /* ATMEGA TYPE SWITCH */
 	
 	recv_buf_master[recv_crsr_master++] = UDR0;
-	
 	if(recv_buf_master[recv_crsr_master - 1] == CMD_DELIMITER && 
 		recv_buf_master[ECP_LEN_IDX] <= recv_crsr_master + 1){
+		
 		recv_crsr_master = 0;
 		command_received = true;
 	}
 
+	master_serial_timeout = 0;
+
+}
+
+void clear_master_buffer(){
+	recv_crsr_master = 0;
+        memset(recv_buf_master, 0, BUFLEN_UART);
 }
 
 int write_frame_to_master(const uint8_t* frame){

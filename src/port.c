@@ -61,9 +61,6 @@ const struct gpio_pin_t gpio_disabled_pins[] ={
 {'H', 0},	/* USART2 RXD */
 {'H', 1},	/* USART2 TXD */
 #endif /* UART_SECONDARY */
-#ifdef ANALOG_EN
-{'F', 0},	/* Analog input */
-#endif /* ANALOG_EN */
 {'E', 0},	/* USART0 RXD */
 {'E', 1}	/* USART0 TXD */
 };

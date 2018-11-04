@@ -85,7 +85,7 @@ int parse_ecp_msg(const uint8_t* msg){
 				return 0;
 			}
 #else
-			if(msg[ECP_ADDR_IDX] == ECP_DEVICE_ID || 
+			if(msg[ECP_ADDR_IDX] == ECP_DEVICE_ID ||
 				msg[ECP_ADDR_IDX] == ECP_DEVICE_ID - 1){
 
 				return ecp_enumerate();

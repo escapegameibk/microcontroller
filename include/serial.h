@@ -34,6 +34,10 @@ uint8_t recv_crsr_master;
 
 void serial_init();
 bool command_received;
+extern unsigned long long int master_serial_timeout;
+#define MASTER_TIMEOUT_THRESHOLD 106250 /* max transmission length */
+
+void clear_master_buffer();
 
 int write_frame_to_master(const uint8_t* frame);
 

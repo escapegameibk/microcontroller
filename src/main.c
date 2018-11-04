@@ -79,6 +79,16 @@ int routine(){
 		memset(recv_buf_master, 0, BUFLEN_UART);
 	        sei(); /* < Enable interrupts */
 		command_received = false;
-        }
+		master_serial_timeout = 0;
+
+        }else{
+		master_serial_timeout++;
+		if(master_serial_timeout > MASTER_TIMEOUT_THRESHOLD){
+			master_serial_timeout = 0;
+			clear_master_buffer();
+		}
+		
+	}
+
         return 0;
 }

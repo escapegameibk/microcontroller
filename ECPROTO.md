@@ -114,16 +114,8 @@ It's payload contains 1 byte indicating the amount of frames following this up.
 As there is no acknowledgement for this from the master, this has to be followed
 up by the specified amount of messages from the slave device.
 
-3. Enumerate. ID 0x03
+3. RESERVED. ID 0x03
 
-This command is issued at startup or at connection initialisation. The first
-parameter is sent by the master without a payload. The slaves are required to
-respond with their ids in incremental order. The first device to respond has
-the id 0, the second 1, and so on. The device should all take a look at the
-previous frame, look at the previous frame sent, and if its own device number is
-the next one up, it should respond. The last device has to know, wether it is
-the last one, and should send it's own address as payload. Via that means, the
-bus is considred enumerated and normal operation is resumed.
 
 4. RESERVED. ID 0x04
 
@@ -177,20 +169,28 @@ Request a list of gpio register IDs. The master may send this request. It's
 payload is empty. The slave should respond with a message with the same id and
 with the id-list as payload. A null-termination is not required.
 
-11. Request gpio pin state 0x0B
+11. Request gpio pin state ID 0x0B
 
 Request wther the requested gpio pin is enabled or not. This action takes
 2 parameters: the register id, and the bit. It returns a frame with the same
 id and 3 paramters: the register id, the bit, and the pin state. The pin state
 should be 0 if the pin is disabled, and 1 if the pin is enabled.
 
-12. Print string to secondary connection 0x0C
+12. Print string to secondary connection ID 0x0C
 
 Print some string to a secondary serial connection. Where and what the secondary 
 connection is is implementaion defined. It may be anything. It takes as a
 parameter a null terminated string, and transfers it to the secondary 
 connection. The NULL-Terminator is NOT transmitted. Its response consists of a
 frame with the same id and a boolean indicating success as a payload.
+
+13. Get analog input ID 0x0D
+
+Request an analog value from a slave. What that analog value may be is not the
+concern of the master, though the masterm ay have influenced this value by some
+other means. This request requires no parameters. Its response consists of a 
+frame with the same id and a 8-bit value of the analog-digital converter, where
+255 is the highest, and 0 the lowest value.
 
 # ERRATA
 
@@ -203,4 +203,27 @@ bus is 38400 baud. It was previously set to 115200 baud... Then i had a glimpse
 at the atmel datasheet forthe atmega 2560.  There is a table in the usart 
 section of the datasheet of the atmel, and found out, that eith a 16MHz 
 oszillator the error on transmission is ~ -3%, which makes the uart connection
-drop some frames. The baud rate was then shrunk to 
+drop some frames. The baud rate was then shrunk to 38400 baud in order to avoid
+this issue. The connection has since had no problems.
+
+## What connects where?
+
+The initial microcontroller was the arduino mega, even though it was only used
+as a breakout board for the underlying atmega2560. The ardino mega has UART as
+well as an USB port. The USB port may be used in some cases, though there was a
+problem: The device was reset on each open on the serial port. So if the host
+crashes, the microcontroller resets. If that happens, we may have a scenario
+where an entire game is ruined, and that is NOT acceptable. There is however a
+solution to this problem. There is a small trace between two larger metal plates
+labeled with RESET-EN. If that trace is cut, the atmega no longer receives a
+reset signal from the USB-controller, thereby solving this problem.
+
+## Analog value inversion? What?
+
+Well that's a funny story, I was workign on a game called "The orphanage" and 
+i was at implementing the ADC command, when I noticed something weired. The
+ADC was throwing values in the range of 250-254 at me. The reason for that was,
+that the Pin was configured as input (that was planned) and pulled high (that 
+wasn't planned). When i disabled the pullup resistors, the ADC spit out nothing.
+It never gave back anything. The board of the orphanage NEEDS the pullup
+resistors to be activated.
