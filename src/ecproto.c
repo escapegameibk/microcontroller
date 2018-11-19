@@ -74,30 +74,6 @@ int parse_ecp_msg(const uint8_t* msg){
 			 * him. Has my master disappointed me? What has
 			 * happened, i don't understand. */
 			 break;
-		case ENUMERATEACTION:
-			/* ECP Enuerate action */
-#if ECP_DEVICE_ID==0
-			if(msg[ECP_ADDR_IDX] == ECP_DEVICE_ID){
-
-				return ecp_enumerate();
-			}else{
-				/* I don't care. */
-				return 0;
-			}
-#else
-			if(msg[ECP_ADDR_IDX] == ECP_DEVICE_ID ||
-				msg[ECP_ADDR_IDX] == ECP_DEVICE_ID - 1){
-
-				return ecp_enumerate();
-			}else{
-				/* I don't care. */
-				return 0;
-			}
-#endif
-			break;
-		case REMOTE_COMMAND:
-			/* RESERVED */	
-			break;
 		case DEFINE_PORT_ACTION:
 			/* Defines a port direction / writes to the ddr */
 			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
@@ -201,16 +177,6 @@ int parse_ecp_msg(const uint8_t* msg){
 	
 }
 
-int ecp_enumerate(){
-
-	if(ECP_LAST_DEV){
-		uint8_t response[] = {ECP_DEVICE_ID};
-		return print_ecp_msg(ENUMERATEACTION,response, sizeof(response));
-	}else{
-		return print_ecp_msg(ENUMERATEACTION,NULL, 0);
-	}
-}
-
 /* Please use this function as RARELY as possible. The AVR copies all of it's
  * strings into ram during startup. Due to this, it is NOT recommended to
  * use strings in any way. */
@@ -223,6 +189,8 @@ int print_ecp_error(char* string){
  */
 int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target){
 	
+	initialized = true;
+
 	if(target > 1){
 		print_ecp_error("fld 2 get prt");
 	}
@@ -302,11 +270,21 @@ uint16_t ibm_crc(const uint8_t* data, size_t len){
 }
 
 int process_updates(){
+	if(!initialized){
+		/* In case the µc has not yet been initialized. Most likely to
+		 * happen in case the microcontroller has been reset. The
+		 * microcontroller is considered initialized, when it has first
+		 * answered a port state request.
+		 */
+
+		print_ecp_msg(INIT_ACTION, NULL, 0);
+		return 1; // It's still successfull.
+	}
 	if(update_pins() < 0){
-		print_ecp_error("updt pns fail");
+		print_ecp_error("updt fail");
 	}
 	uint8_t updatecnt = 0xFF & get_port_update_count();
-	print_ecp_msg(2, &updatecnt, sizeof(uint8_t));
+	print_ecp_msg(SEND_NOTIFY, &updatecnt, sizeof(uint8_t));
 	
 	return send_port_updates();
 }

@@ -30,7 +30,6 @@
 
 int parse_ecp_msg(const uint8_t* msg);
 
-int ecp_enumerate();
 int print_ecp_error(char* string);
 int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target);
 int print_success_reply(uint8_t action_id, bool success);
