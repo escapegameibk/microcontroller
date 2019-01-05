@@ -19,6 +19,7 @@
 #include "serial.h"
 #include "port.h"
 #include "general.h"
+#include "external_device.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -139,6 +140,8 @@ int parse_ecp_msg(const uint8_t* msg){
 				 */
 			return print_ecp_msg(11, pay ,sizeof(pay) );
 		}
+
+
 		break;
 #ifdef UART_SECONDARY
 		
@@ -160,12 +163,32 @@ int parse_ecp_msg(const uint8_t* msg){
 #ifdef ANALOG_EN
 		case ADC_GET:
 			{
+				/* DEPRECATED, TO BE REMOVED: TODO*/
 				uint8_t adc_res = get_adc();
 				return print_ecp_msg(ADC_GET, &adc_res, 
 					sizeof(adc_res));
 			}
 			break;
 #endif /* ANALOG_EN */
+
+#ifndef NO_EXTERNALS
+
+		case EXT_DEV_REG:
+			/* Register an external device. Pass onto module 
+			 * subsystem
+			 */
+			return register_external_device(msg);
+			break;
+		
+		case EXT_DEV_INT:
+			/* Interact with an external device. Pass onto module 
+			 * subsystem
+			 */
+			
+
+			break;
+
+#endif /* NO_EXTERNALS */
 		default:
 			print_ecp_error("not implmntd");
 			return -1;

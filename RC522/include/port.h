@@ -19,6 +19,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifndef PORT_H
+#define PORT_H
+
 struct gpio_register_t{
 	unsigned volatile char* port;
 	unsigned volatile char* ddir;
@@ -31,10 +34,27 @@ struct gpio_pin_t{
 	uint8_t pin; /* [0; 8[ */
 };
 
+/* This struct is used to completely describe one single GPIO pin */
+struct gpio_pin_desc_t{
+	const struct gpio_register_t* reg;
+	uint8_t bit; /* [0; 8[ */
+};
+
 uint8_t gpio_register_cnt;
 
 extern unsigned char last_pin_states[];
 extern unsigned char actual_pin_states[];
+
+#ifndef NOSPI
+
+#define SPI_BASE_PORTCNT 3
+#define SPI_SS_CNT 9
+
+extern struct gpio_pin_t spi_used_pins[];
+
+uint8_t get_spi_portcnt();
+
+#endif /* NOSPI */
 
 void init_ports();
 
@@ -43,6 +63,7 @@ size_t get_port_update_count();
 int send_port_updates();
 int save_ports();
 
+const struct gpio_register_t* get_port_reg_by_id(const char id);
 int write_port(char id, uint8_t bit, bool value);
 int write_port_ddr(char id, uint8_t bit, bool value);
 /* Returns 0 for low, 1 for high, and > 1 on error */
@@ -52,3 +73,4 @@ bool is_pin_blacklisted(char car, uint8_t id);
 #ifdef ANALOG_EN
 uint8_t get_adc();
 #endif /* ANALOG_EN */
+#endif /* PORT_H */

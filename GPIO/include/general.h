@@ -24,8 +24,7 @@
 
 #define UART_BAUD_RATE 38400UL
 
-#define ECP_DEVICE_ID 2
-#define ECP_LAST_DEV true
+#define ECP_DEVICE_ID 0
 
 extern bool initialized;
 

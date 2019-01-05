@@ -193,7 +193,7 @@ other means. This request requires no parameters. Its response consists of a
 frame with the same id and a 8-bit value of the analog-digital converter, where
 255 is the highest, and 0 the lowest value.
 
-**As of 2018-12 this command is deprecated. Please use commands 0x0F for any new
+**As of 2018-12 this command is deprecated. Please use commands 0x0E for any new
 features**
 
 ### 14. RESERVED ID 0x0E
@@ -209,30 +209,6 @@ be able to read from the desired pins adccordingly. It may be nescessary for a
 device to disable pins at runtime in order to archieve this. The response to
 this message should consist of a frame with the same id with the adc
 conversion as one byte payload where 255 is the highest and 0 the lowest value.
-
-### 16. Get special device purpose
-
-This function is used to return a special device purpose. 
-Please see the Section
-on Special Devices at the End of this document.
-
-### 17. Special device interaction
-
-This function is used for any kind of special device interaction. Please see the
-section on special devices at the end of this document.
-
-# Special Devices
-
-Whilest developing more and more stuff it became apparent to me, that the 
-microcontroller code was becomeing too complex. To keep it backwards
-compatiable the devices basically needed to be able to do basically anything,
-and I was planning to enable any device to perform any task, which was pretty
-dumb. So it was decided, that it was best to separate code for special tasks
-into different code bases, so that it stays maintainable and doesn't look too
-dumb.
-
-## Special devices
-
 
 # ERRATA
 
