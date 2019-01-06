@@ -17,7 +17,6 @@
 
 #include "serial.h"
 #include "ecproto.h"
-#include "port.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -44,10 +43,6 @@ int main(){
 	/* Disable interrupts during initialisation phase */	
 	cli();
 
-	/* Done first in order to allow future override of the UART pins, and
-	 * any other pins */
-	init_ports();
-
 	/* initialize the uart connection to the controller */
         serial_init();
 	
@@ -59,7 +54,7 @@ int main(){
 	wdt_enable(WDTO_4S);
 	
         
-	while(1){
+	for(;;){
 		wdt_reset();
                 if(routine() < 0){
                 }

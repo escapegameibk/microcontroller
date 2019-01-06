@@ -98,14 +98,14 @@ uint8_t mfrc522_select_tag(uint8_t *serNum);
 struct mfrc522_dev_t{
 	uint32_t last_tag;
 	uint32_t current_tag;
-	uint8_t spi_devid;
+	bool last_tag_present, current_tag_present;
+	struct gpio_pin_t pindesc;
+	bool reader_present;
 };
 
-extern struct mfrc522_dev_t mfrc_devs[SPI_SS_CNT];
+extern struct mfrc522_dev_t mfrc_devs[];
 
 extern uint8_t mfrc_devcnt;
-
-int mfrc522_register_device(char car, uint8_t bit);
 
 bool mfrc522_check_forreader();
 

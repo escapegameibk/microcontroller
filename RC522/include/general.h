@@ -27,6 +27,8 @@
 #define ECP_DEVICE_ID 0
 #define ECP_LAST_DEV true
 
+#define MAX_RC522_DEVS
+
 extern bool initialized;
 
 #endif

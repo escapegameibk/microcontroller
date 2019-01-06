@@ -25,9 +25,28 @@
 #include "ecproto.h"
 
 #include <string.h>
+#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 
-struct  mfrc522_dev_t mfrc_devs[SPI_SS_CNT];
-uint8_t mfrc_devcnt = 0;
+struct  mfrc522_dev_t mfrc_devs[] = {
+	{0,0,false,false,{'D',2}, false},
+	{0,0,false,false,{'D',3}, false},
+	{0,0,false,false,{'D',4}, false},
+	{0,0,false,false,{'D',5}, false},
+	{0,0,false,false,{'D',6}, false},
+	{0,0,false,false,{'D',7}, false},
+	{0,0,false,false,{'B',0}, false},
+	{0,0,false,false,{'B',1}, false},
+	{0,0,false,false,{'B',2}, false},
+	{0,0,false,false,{'C',0}, false},
+	{0,0,false,false,{'C',1}, false},
+	{0,0,false,false,{'C',2}, false},
+	{0,0,false,false,{'C',3}, false},
+	{0,0,false,false,{'C',4}, false},
+	{0,0,false,false,{'C',5}, false},
+	};
+#endif
+
+uint8_t mfrc_devcnt = sizeof(mfrc_devs) / sizeof(struct mfrc522_dev_t);
 
 uint8_t keyA_default[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
 uint8_t keyB_default[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
@@ -547,55 +566,6 @@ uint8_t mfrc522_select_tag(uint8_t *serNum){
  * ############################################################################
  */
 
-/* The parameter is the client select pin. Everything else is assumed */
-int mfrc522_register_device(char car, uint8_t bit){
-
-	if(mfrc_devcnt >= SPI_SS_CNT){
-		print_ecp_error("full");
-	}
-
-	int ret = spi_register_slave(car, bit);
-
-	if(ret < 0){
-		print_ecp_error("spi regerr");
-		return -1;
-
-	}else{
-		/* The mfrc522 ids are basically an array offset for the spi
-		 * device list, as well as the spi dev ids
-		 */
-		
-		struct mfrc522_dev_t* dev = &mfrc_devs[++mfrc_devcnt - 1];
-		dev->last_tag = 0;
-		dev->current_tag = 0;
-		dev->spi_devid = (spi_devcnt - 1);
-		uint8_t id = mfrc_devcnt - 1;
-
-		spi_select_slaveno(dev->spi_devid);
-
-		/* Check wether the reader is actually present */
-
-		if(!mfrc522_check_forreader()){
-			/* Clear all */
-			--mfrc_devcnt;
-			memset(dev, 0, sizeof(struct mfrc522_dev_t));
-
-			--spi_devcnt;
-			memset(&spi_used_pins[spi_devcnt], 0, 
-				sizeof(struct gpio_pin_t));
-		
-			print_ecp_error("NT PRESENT");
-			
-			
-			
-
-		}
-		print_ecp_msg(EXT_DEV_REG, &id, sizeof(id));
-	}
-
-	return 0;
-}
-
 /* Check wether a reader is present
  *
  * **THIS FUNCTION DOES NOT SET THE SELECTED SPI SLAVE FOR YOU!**  
@@ -613,4 +583,6 @@ bool mfrc522_check_forreader(){
 	return true;
 }
 
+void mfrc522_check_for_all_readers(){
 
+}

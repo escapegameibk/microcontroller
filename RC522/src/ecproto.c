@@ -17,9 +17,7 @@
 
 #include "ecproto.h"
 #include "serial.h"
-#include "port.h"
 #include "general.h"
-#include "external_device.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -76,119 +74,31 @@ int parse_ecp_msg(const uint8_t* msg){
 			 * happened, i don't understand. */
 			 break;
 		case DEFINE_PORT_ACTION:
-			/* Defines a port direction / writes to the ddr */
-			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
-				print_ecp_error("2 few parms");
-				return -4;
-			}
-			return print_success_reply(DEFINE_PORT_ACTION, 
-				write_port_ddr(msg[ECP_PAYLOAD_IDX],
-				msg[ECP_PAYLOAD_IDX + 1], 
-				msg[ECP_PAYLOAD_IDX + 2]) >= 0);
-			break;
 		case GET_PORT_ACTION:
-			/* Gets a port */
-			if(msg[ECP_LEN_IDX] <  2 + ECPROTO_OVERHEAD){
-				print_ecp_error("2 few parms");
-				return -5;
-			}
-			
-			return print_ecp_pin_update(msg[ECP_PAYLOAD_IDX], 
-				msg[ECP_PAYLOAD_IDX + 1], 
-				get_port_pin(msg[ECP_PAYLOAD_IDX], 
-				msg[ECP_PAYLOAD_IDX + 1]));
-
-			break;
 		case WRITE_PORT_ACTION:
-			/* Defines a port state / writes to the port */
-			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
-				print_ecp_error("2 few parms");
-				return -6;
-			}
-
-			return print_success_reply(7,
-				write_port(msg[ECP_PAYLOAD_IDX],
-				msg[ECP_PAYLOAD_IDX + 1], 
-				msg[ECP_PAYLOAD_IDX + 2]) >= 0);
+		case PIN_ENABLED:
+			print_ecp_error("NO GPIO");
 			break;
+		
 		case REGISTER_COUNT:
+
+			initialized = true;	
+
 			/* Request the gpio register count. */
-			return print_ecp_msg(REGISTER_COUNT, &gpio_register_cnt, 
-				sizeof(uint8_t));
+			{
+				uint8_t cnt = 0;
+
+				return print_ecp_msg(REGISTER_COUNT, 
+					&cnt, sizeof(cnt));
+			}
 			break;
 		case REGISTER_LIST:
+			initialized = true;	
 			/* Requested a list of register ids */
-			return print_port_ids();
-			break;
-		case PIN_ENABLED:
-			/* Request wether the given pin is disabled or not */
-		{
-			if(msg[ECP_LEN_IDX] < 2 + ECPROTO_OVERHEAD){
-				print_ecp_error("2 few parms");
-				return -7;
-			}
-			uint8_t pay[] = {msg[ECP_PAYLOAD_IDX], 
-				msg[ECP_PAYLOAD_IDX + 1], 
-				!is_pin_blacklisted(msg[ECP_PAYLOAD_IDX], 
-					msg[ECP_PAYLOAD_IDX + 1])};
-				
-				/* The pin blacklist function is inverted, 
-				 * because it returns true if the pin is 
-				 * blacklisted and false if not. The action
-				 * querys wther the pin is enabled. Therefore
-				 * the state should be inverted
-				 */
-			return print_ecp_msg(11, pay ,sizeof(pay) );
-		}
-
-
-		break;
-#ifdef UART_SECONDARY
-		
-		case SECONDARY_PRINT:
-			if(msg[msg[ECP_LEN_IDX] - 4] != 0){
-				print_ecp_error("nonull");
-				return -8;		
-			}
-			{
-				uint8_t success = 0>=write_string_to_secondary(
-					(char*)&msg[ECP_PAYLOAD_IDX]);
-				return print_ecp_msg(SECONDARY_PRINT, &success,
-					sizeof(uint8_t));
-			}
-
+				return print_ecp_msg(REGISTER_LIST, 
+					NULL, 0);
 			break;
 
-#endif /* UART_SECONDARY */
-#ifdef ANALOG_EN
-		case ADC_GET:
-			{
-				/* DEPRECATED, TO BE REMOVED: TODO*/
-				uint8_t adc_res = get_adc();
-				return print_ecp_msg(ADC_GET, &adc_res, 
-					sizeof(adc_res));
-			}
-			break;
-#endif /* ANALOG_EN */
-
-#ifndef NO_EXTERNALS
-
-		case EXT_DEV_REG:
-			/* Register an external device. Pass onto module 
-			 * subsystem
-			 */
-			return register_external_device(msg);
-			break;
-		
-		case EXT_DEV_INT:
-			/* Interact with an external device. Pass onto module 
-			 * subsystem
-			 */
-			
-
-			break;
-
-#endif /* NO_EXTERNALS */
 		default:
 			print_ecp_error("not implmntd");
 			return -1;
@@ -208,32 +118,10 @@ int print_ecp_error(char* string){
 		1);
 }
 
-/* If the target is larger than 1, tell the master that the inputs were invalid
- */
-int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target){
-	
-	initialized = true;
-
-	if(target > 1){
-		print_ecp_error("fld 2 get prt");
-	}
-
-	uint8_t pay[] = {(uint8_t)reg_id, bit_id, target};
-	return print_ecp_msg(GET_PORT_ACTION, pay, sizeof(pay));
-}
-
 int print_success_reply(uint8_t action_id, bool success){
 	uint8_t suc = success;
 	return print_ecp_msg(action_id, &suc, sizeof(suc));
 }
-
-#ifdef ANALOG
-int print_adc(){
-	uint8_t adc = get_adc_result();
-	return print_ecp_msg(ADC_GET, &adc, sizeof(adc));
-}
-
-#endif /* ANALOG */
 
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){
 
@@ -303,12 +191,9 @@ int process_updates(){
 		print_ecp_msg(INIT_ACTION, NULL, 0);
 		return 1; // It's still successfull.
 	}
-	if(update_pins() < 0){
-		print_ecp_error("updt fail");
-	}
-	uint8_t updatecnt = 0xFF & get_port_update_count();
-	print_ecp_msg(SEND_NOTIFY, &updatecnt, sizeof(uint8_t));
-	
-	return send_port_updates();
+
+	print_ecp_error("TODO");
+
+	return 0;
 }
 

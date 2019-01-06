@@ -19,14 +19,13 @@
  * Copyrights:
  *
  * Copyright 2013 Shimon <shimon@monistit.com>
- * Copyright 2018 tyrolyean <tyrolyean@mtyrolyean.net>
+ * Copyright 2018-2019 tyrolyean <tyrolyean@mtyrolyean.net>
  * 
  */
 #ifndef SPIX_H
 #define SPIX_H
 
 #include "spix_config.h"
-#include "port.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -36,17 +35,9 @@ uint8_t spi_transmit(uint8_t data);
 
 void    spi_set_cs(char car, uint8_t bit);
 
-int     spi_select_slaveno(uint8_t id);
-
-int     spi_register_slave(char reg_car, uint8_t bit);
-
 extern struct gpio_pin_desc_t spi_current_cs;
 
 #define ENABLE_CHIP() (*spi_current_cs.reg->port &= (~(1<<spi_current_cs.bit)))
 #define DISABLE_CHIP() (*spi_current_cs.reg->port |= (1<<spi_current_cs.bit))
-
-extern uint8_t spi_devcnt;
-extern bool spi_initialized;
-
 
 #endif

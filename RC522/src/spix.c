@@ -92,6 +92,7 @@ uint8_t spi_transmit(uint8_t data){
 void spi_set_cs(char car, uint8_t bit){
 
 	if(bit >= 8){
+		/* WTF are you doing? */
 		return;
 	}
 
@@ -110,54 +111,3 @@ void spi_set_cs(char car, uint8_t bit){
 	return;
 
 }
-
-int spi_select_slaveno(uint8_t id){
-
-	if( id >= spi_devcnt){
-		return -1;
-	}
-	
-	/* Copy the original pin as the current one */
-	spi_set_cs(spi_used_pins[id].car, spi_used_pins[id].pin);
-
-	return 0;
-	
-}
-
-int spi_register_slave(char reg_car, uint8_t bit){
-
-	if(SPI_SS_CNT <= spi_devcnt){
-		/* No space left to store devices. */
-		return -1;
-	}
-
-	if(get_port_reg_by_id(reg_car) == NULL){
-		/* No such register */
-		return -2;
-	}
-
-	if(bit >= 8){
-		/* Apparently you have 8+n | n > 0 bit bytes. */ 
-		return -3;
-	}
-
-	if(!spi_initialized){
-		/* I guess if you begin to add slaves, you may just as well use 
-		 * them. 
-		 */
-		spi_init();
-	}
-
-	/* Write data to newest position of array */
-	spi_devcnt++;
-	uint8_t arrin = spi_devcnt + SPI_BASE_PORTCNT - 1;
-
-	struct gpio_pin_t ss = {reg_car, bit};
-
-	memcpy(&spi_used_pins[arrin], &ss, sizeof(ss));
-	/* Successfull addition of the spi device */
-
-	return 0;
-}
-
-
