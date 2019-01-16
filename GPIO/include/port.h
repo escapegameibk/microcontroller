@@ -40,17 +40,12 @@ struct gpio_pin_desc_t{
 	uint8_t bit; /* [0; 8[ */
 };
 
-uint8_t gpio_register_cnt;
-
-extern unsigned char last_pin_states[];
-extern unsigned char actual_pin_states[];
-
+extern uint8_t gpio_register_cnt;
 
 void init_ports();
 
 int update_pins();
-size_t get_port_update_count();
-int send_port_updates();
+size_t port_updates(bool send);
 int save_ports();
 
 const struct gpio_register_t* get_port_reg_by_id(const char id);

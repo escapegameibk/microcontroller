@@ -286,9 +286,9 @@ int process_updates(){
 	if(update_pins() < 0){
 		print_ecp_error("updt fail");
 	}
-	uint8_t updatecnt = 0xFF & get_port_update_count();
+	uint8_t updatecnt = 0xFF & port_updates(false);
 	print_ecp_msg(SEND_NOTIFY, &updatecnt, sizeof(uint8_t));
 	
-	return send_port_updates();
+	return port_updates(true);
 }
 

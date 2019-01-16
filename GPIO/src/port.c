@@ -78,16 +78,16 @@ const struct gpio_pin_t gpio_disabled_pins[] ={
 };
 #endif
 
-#ifndef NOSPI
 
+#define GPIO_REGISTER_COUNT (sizeof(gpio_registers) /\
+	sizeof(struct gpio_register_t))
 
-#endif /* NOSPI */
+uint8_t gpio_register_cnt = (sizeof(gpio_registers) /
+	sizeof(struct gpio_register_t));
 
-#define gpio_register_cnt (sizeof(gpio_registers) / sizeof(struct gpio_register_t))
+unsigned char last_pin_states[GPIO_REGISTER_COUNT];
 
-unsigned char last_pin_states[gpio_register_cnt];
-
-unsigned char actual_pin_states[gpio_register_cnt];
+unsigned char actual_pin_states[GPIO_REGISTER_COUNT];
 
 void init_ports(){
 	
@@ -110,8 +110,9 @@ int update_pins(){
 	return 0;
 }
 
-size_t get_port_update_count(){
-	size_t upcnt = 0; 
+size_t port_updates(bool send){
+
+	size_t upcnt = 0;
 
 	for(size_t regcnt = 0; regcnt < gpio_register_cnt; regcnt++){
 
@@ -122,42 +123,28 @@ size_t get_port_update_count(){
 
 			bool bitold = (pinold >> bit) & 0x01;
 			bool bitnew = (pinnew >> bit) & 0x01;
-			if((bitold != bitnew) && is_pin_blacklisted(
+			if((bitold != bitnew) && !is_pin_blacklisted(
 				gpio_registers[regcnt].car, bit)){
+				if(send){
+					struct gpio_register_t reg =
+						gpio_registers[regcnt];
+					print_ecp_pin_update(reg.car, 
+						bit, bitnew);
+
+				}
+				
 				upcnt++;
+				
 			}
 		}
-	}
 
-	return upcnt;
-}
-
-int send_port_updates(){
-
-	int status = 0;
-
-	for(size_t regcnt = 0; regcnt < gpio_register_cnt; regcnt++){
-
-		uint8_t pinold = last_pin_states[regcnt];
-		uint8_t pinnew = actual_pin_states[regcnt];
-
-		for(size_t bit = 0; bit < 8; bit++){
-
-			bool bitold = (pinold >> bit) & 0x01;
-			bool bitnew = (pinnew >> bit) & 0x01;
-			if((bitold != bitnew) && is_pin_blacklisted(
-				gpio_registers[regcnt].car, bit)){
-
-				struct gpio_register_t reg =
-					gpio_registers[regcnt];
-				status |= print_ecp_pin_update(reg.car, bit, bitnew);
-			}
+		if(send){
+			last_pin_states[regcnt] = actual_pin_states[regcnt];
 		}
+
 	}
 
-	status |= save_ports();
-
-	return 0;	
+	return upcnt;	
 }
 
 /* Save the new port states to the old registers */

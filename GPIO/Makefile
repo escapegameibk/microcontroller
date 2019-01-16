@@ -27,7 +27,7 @@ SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-CFLAGS := -mmcu=$(BOARD) -Os -I$(INCLUDEDIR) -Wall -Wextra -D ANALOG_EN -D UART_SECONDARY
+CFLAGS := -mmcu=$(BOARD) -Os -I$(INCLUDEDIR) -Wall -Wextra -D ANALOG_EN -D UART_SECONDARY -D ANALOG_EN
 LDFLAGS := -mmcu=$(BOARD)
 
 # target files
