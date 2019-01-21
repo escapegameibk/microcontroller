@@ -210,13 +210,13 @@ device to disable pins at runtime in order to archieve this. The response to
 this message should consist of a frame with the same id with the adc
 conversion as one byte payload where 255 is the highest and 0 the lowest value.
 
-### 16. Get special device purpose
+### 16. Get special device purpose ID 0x10
 
 This function is used to return a special device purpose. 
 Please see the Section
 on Special Devices at the End of this document.
 
-### 17. Special device interaction
+### 17. Special device interaction ID 0x11
 
 This function is used for any kind of special device interaction. Please see the
 section on special devices at the end of this document.
@@ -233,6 +233,103 @@ dumb.
 
 ## Special devices
 
+Some devices have a more special use-case than just plainely GPIO, for example
+controlling multiple SPI-slaves, uart device controllers, etc. Therefore
+special devices hae been introduced to the protocol in order to be flexible
+enough to handle the very strange situations in an escape room.
+
+### Action IDs 0x10 and 0x11
+
+In order to avoid protocol pollution with too many action IDs used up just for
+special device interaction, special device interaction has been limited to
+the IDs 0x10 and 0x11. Any other IDs should be avoided unless it is impractical
+to implement the response that was, for example if the response has to indicate
+something to other clients, or repeaters.
+
+#### Action 0x10
+
+The 0x10 command may be used on any device to retrieve it's available
+special devices. This command may fail with an error response in case the
+command has not been implemented, in which case the slave may be assumed to ONLY
+contain GPIO. A master request may use 0x10 as action id and an empty payload to
+request a list of special devices from a slave. A response must start with the
+amount of special device kinds as the very first byte of the payload, followed
+by a list of the specified amount of special device IDs. A NULL-Termination is
+not required.
+
+#### Special device IDs
+
+The following special device IDs have been specified thus far:
+
+0. GPIO:
+	A ID of the numeric value 0 specifies that the device is GPIO capable.
+	It is not nescessary for a device to have GPIO capability, though it
+	is required to answer to the register count and register list commands.
+
+1. OLD ANALOG:
+	An ID of the numeric value 1 specifies that the device is compatiable 
+	with the deprecated analog device system. Please don't use this in any 
+	new installation. This may be assumed to exist by a master. Please 
+	REALLY don't use this anymore!
+
+2. NEW ANALOG:
+	An ID of the numeric value 2 specifies that the device is capable of the
+	new analog input system. Please use this instead of the deprecated
+	system!
+
+3. MFRC522:
+	An ID with the numeric value 3 represents an MFRC522 action. MFRC522
+	capable devices usually have no, or limited amounts of GPIO pins.
+	MFRC522 may lock any GPIO pins needed for SPI communication.
+	For further details on how to handle MFRC522 capable devices see
+	the following paragraph on the 0x11 command.
+
+#### Action 0x11
+
+Commands with the action ID 0x11 are reserved for communication regarding
+special device actions. The entire payload may be imagined as if it was "passed
+on to a submodule an never looked at during transport", by which I want to tell
+you that the payload may contain anything and is entirely special device type
+dependant. A command regarding action 0x11 may ALWAYS contain a payload starting
+with a special device ID which the device previously has been announceing
+through the 0x10 command that it is capable of using it. Communication
+has been specified for the following special devices:
+
+##### GPIO:
+**NO ACTION MAY BE PERFORMED FOR THE GPIO SUBMODULE! PLEASE USE REGULAR 
+ACTIONS!**
+
+##### OLD ANALOG:
+**NO ACTION MAY BE PERFORMED FOR THIS SUBMODULE! PLEASE USE REGULAR ACTIONS!**
+
+##### NEW ANALOG:
+**NO ACTION MAY BE PERFORMED FOR THIS SUBMODULE! PLEASE USE REGULAR ACTIONS!**
+
+##### MFRC522:
+
+MFRC522 contains after the special device ID a so called sub-action id, which 
+is used to indicate to the slave what the master wants, and exactly 1 octet 
+in lenght. As with a regular command, every request by a master has to be 
+answered with at least one frame. The following sub-commands have to be 
+implemented:
+
+0. How many:
+
+	A sub-action ID with the numeric value 0 indicates a request of the
+	master how many MFRC522 devices are connected to the slave. A response
+	must be a frame with the same sub-action as the sender, but containing
+	an extra byte in the payload containing the number of connected
+	devices.
+
+1. What's there:
+
+	A sub-action ID with the numeric value 1 indicates a request if a RFID-
+	Tag is present at the given position. The position is the first octet to
+	follow the sub-action ID, and in a request the only parameter. In a
+	respinse it is followed by 1 octet containing a boolean value
+	indicateing wether a RFID-tag is present or not and ALWAYS 5 octets
+	containing the RFID-tag ID. If no rfid tag is present the ID may contain
+	garbage.
 
 # ERRATA
 
