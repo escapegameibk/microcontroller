@@ -97,6 +97,7 @@ void init_ports(){
 
 	ADCSRA = (1<<ADEN) | (1<<ADPS2);
 	ADMUX  = (1<<ADLAR) | (1<<REFS0);    // Left-adjust, Ref. = AVCC
+
 	return;
 }
 

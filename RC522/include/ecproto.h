@@ -41,6 +41,8 @@ int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length);
 uint16_t ibm_crc(const uint8_t* data, size_t len);
 int process_updates();
 
+int handle_special_action(const uint8_t* payload, uint8_t length);
+
 #define INIT_ACTION            0x00
 #define REQ_SEND               0x01 
 #define SEND_NOTIFY            0x02
@@ -56,13 +58,23 @@ int process_updates();
 #define SECONDARY_PRINT        0x0C
 #define ADC_GET                0x0D
 #define ADC_GET2               0x0F
-#define EXT_DEV_REG            0x10
-#define EXT_DEV_INT            0x11
+#define GET_PURPOSE            0x10
+#define SPECIAL_INTERACT       0x11
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
 #define ECP_ID_IDX 2
 #define ECP_PAYLOAD_IDX 3
+
+
+#define SPECIALDEV_GPIO        0x00
+#define SPECIALDEV_OLD_ANALOG  0x01
+#define SPECIALDEV_NEW_ANALOG  0x02
+#define SPECIALDEV_MFRC522     0x03
+
+#define MFRC522_GET_ALL_DEVS   0x00
+#define MFRC522_GET_TAG	       0x01
+
 
 #endif /* ECPROTO_H */
 

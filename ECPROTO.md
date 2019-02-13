@@ -19,7 +19,7 @@ or any such thing is required. The address is always the SECOND bit transferred.
 
 ## Byte ordering
 
-The byteordering is LITTLE ENDIAN, which menas the first bit has the highest 
+The byteordering is BIG ENDIAN, which means the first byte has the highest 
 rank. For more infomration on endiannes see this link:
 
 https://en.wikipedia.org/wiki/Endianness
@@ -307,8 +307,8 @@ ACTIONS!**
 
 ##### MFRC522:
 
-MFRC522 contains after the special device ID a so called sub-action id, which 
-is used to indicate to the slave what the master wants, and exactly 1 octet 
+MFRC522 contains after the special device ID, a so called sub-action id, which 
+is used to indicate to the slave what the master wants and is exactly 1 octet 
 in lenght. As with a regular command, every request by a master has to be 
 answered with at least one frame. The following sub-commands have to be 
 implemented:
@@ -319,17 +319,23 @@ implemented:
 	master how many MFRC522 devices are connected to the slave. A response
 	must be a frame with the same sub-action as the sender, but containing
 	an extra byte in the payload containing the number of connected
-	devices.
+	devices. A non-responsive device may still be viewed as "connected".
 
 1. What's there:
 
 	A sub-action ID with the numeric value 1 indicates a request if a RFID-
 	Tag is present at the given position. The position is the first octet to
 	follow the sub-action ID, and in a request the only parameter. In a
-	respinse it is followed by 1 octet containing a boolean value
+	response it is followed by 1 octet containing a boolean value
 	indicateing wether a RFID-tag is present or not and ALWAYS 5 octets
 	containing the RFID-tag ID. If no rfid tag is present the ID may contain
-	garbage.
+	garbage. In case the device at the given position is not responding, the
+	boolean indicating, wether a RFID-TAG is present should be set to false,
+	and the 4 following octets, representing the tag-id, should be set to 
+	**E R O R** in ASCII. In a numeric representation this would be 
+	equivalent to 0x45524F52 or 1163022162 at base 16 and 10 respectively. 
+	Implementation of this is not nescessary, but may help during 
+	debugging.
 
 # ERRATA
 

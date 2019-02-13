@@ -29,21 +29,34 @@
 
 #include <string.h>
 
-uint8_t spi_devcnt = 0;
-bool spi_initialized = false;
 
 struct gpio_pin_desc_t spi_current_cs = {
 	NULL,
 	0
 };
 
-#if SPI_CONFIG_AS_MASTER
 void spi_init(){
+	/* Today was a good day. After 3 days of debugging, I finally found out,
+	 * why the fuck the avr would seemingly at random hang up. It wouldn't 
+	 * let me transmit anything over the SPI. My initial suspicions of a
+	 * stack overflow turned out to be incorrect. A small sentence in the
+	 * AVR's datasheet made me a bit angry:
+	 *  Bit 4 – MSTR: Master/Slave Select
+	 *  This bit selects Master SPI mode when written to one, and Slave SPI
+	 *  mode when written logic zero. If SS is config-ured as an input and 
+	 *  is driven low while MSTR is set, MSTR will be cleared, and SPIF in 
+	 *  SPSR will become set.The user will then have to set MSTR to 
+	 *  re-enable SPI Master mode.
+	 *
+	 * Well FUCK. Please leave the SPI_SS in here.
+	 */
 
-	SPI_DDR = (1<<SPI_MOSI)|(1<<SPI_SCK);
-	SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);//prescaler 16
-
-	spi_initialized = true;
+	SPI_DDR = (1<<SPI_MOSI)|(1<<SPI_SCK)|(1<<SPI_SS);
+	SPI_PORT = (1<<SPI_SS); /* DISABLE SS */
+	/* The SPI prescaler is set to 16, which ends up at ~1MHz. This would be
+	 * small enough to get through a whole room probably. Well not
+	 * seriously, it would come close to 3-4m though.*/
+	SPCR |= (1<<SPE)|(1<<MSTR)|(1<<SPR0);//prescaler 16
 
 	return;
 }
@@ -54,40 +67,12 @@ void spi_init(){
  */
 uint8_t spi_transmit(uint8_t data){
 	
-	if(!spi_initialized){
-		spi_init();
-	}
-
 	SPDR = data;
 	while(!(SPSR & (1<<SPIF)));
-	
+
 	return SPDR;
 }
 
-#else /* SPI_CONFIG_AS_MASTER */
-void spi_init(){
-
-	SPI_DDR = (1<<SPI_MISO);
-	SPCR = (1<<SPE) | (1<<SPR00);
-
-	spi_initialized = true;
-}
-
-/*
- * Transmit one char to the slave. The Chip select pin is to be pulled low
- * by the caller.
- */
-uint8_t spi_transmit(uint8_t data){
-	
-	if(!spi_initialized){
-		spi_init();
-	}
-
-	while(!(SPSR & (1<<SPIF)));
-	return SPDR;
-}
-
-#endif /* SPI_CONFIG_AS_MASTER */
 
 void spi_set_cs(char car, uint8_t bit){
 
@@ -106,7 +91,6 @@ void spi_set_cs(char car, uint8_t bit){
 	/* Set the SPI pin to output mode and drive it high */
 	
 	*spi_current_cs.reg->ddir |= (0x1 << spi_current_cs.bit);
-	*spi_current_cs.reg->port |= (0x1 << spi_current_cs.bit);
 	
 	return;
 

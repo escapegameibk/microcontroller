@@ -169,6 +169,35 @@ int parse_ecp_msg(const uint8_t* msg){
 			}
 			break;
 #endif /* ANALOG_EN */
+		case GET_PURPOSE:
+
+			{
+				uint8_t capabilities[] = {
+					
+					SPECIALDEV_GPIO
+#ifdef ANALOG_EN
+					,SPECIALDEV_OLD_ANALOG
+#endif /* ANALOG_EN */
+
+				};
+
+				uint8_t dat[sizeof(capabilities) + 
+					sizeof(uint8_t)];
+				memcpy(&dat[1], capabilities, 
+					sizeof(capabilities));
+
+				dat[0] = sizeof(capabilities) / sizeof(uint8_t);
+				
+				return print_ecp_msg(GET_PURPOSE, dat,
+					sizeof(dat));
+
+			}
+			break;
+
+		case SPECIAL_INTERACT:
+		/* Special device interactions are NOT handled, because gpio
+		 * actions are regular ECP actions!
+		 */
 		default:
 			print_ecp_error("not implmntd");
 			return -1;

@@ -25,5 +25,6 @@
 #define SPI_MOSI	PORTB3
 #define SPI_MISO	PORTB4
 #define SPI_SCK		PORTB5
+#define SPI_SS		PORTB2 /* Needed for init. NOTHING ELSE */
 
 #endif

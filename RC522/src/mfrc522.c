@@ -25,24 +25,25 @@
 #include "ecproto.h"
 
 #include <string.h>
+#include <stdio.h>
 #if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 
 struct  mfrc522_dev_t mfrc_devs[] = {
-	{0,0,false,false,{'D',2}, false},
-	{0,0,false,false,{'D',3}, false},
-	{0,0,false,false,{'D',4}, false},
-	{0,0,false,false,{'D',5}, false},
-	{0,0,false,false,{'D',6}, false},
-	{0,0,false,false,{'D',7}, false},
-	{0,0,false,false,{'B',0}, false},
-	{0,0,false,false,{'B',1}, false},
-	{0,0,false,false,{'B',2}, false},
-	{0,0,false,false,{'C',0}, false},
-	{0,0,false,false,{'C',1}, false},
-	{0,0,false,false,{'C',2}, false},
-	{0,0,false,false,{'C',3}, false},
-	{0,0,false,false,{'C',4}, false},
-	{0,0,false,false,{'C',5}, false},
+	{{0,0,0,0},{0,0,0,0},false,false,{'D',2}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'D',3}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'D',4}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'D',5}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'D',6}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'D',7}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'B',0}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'B',1}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'B',2}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'C',0}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'C',1}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'C',2}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'C',3}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'C',4}, false, 0},
+	{{0,0,0,0},{0,0,0,0},false,false,{'C',5}, false, 0}
 	};
 #endif
 
@@ -52,38 +53,10 @@ uint8_t keyA_default[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
 uint8_t keyB_default[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
 
 /*
- * Initial device configuration. Set all registers to their desired values,
- * enable device functionallities ans so on... Also performs a device reset.
- */
-void mfrc522_init(){
-
-	uint8_t byte;
-	mfrc522_reset();
-	
-	mfrc522_write(TModeReg, 0x8D);
-	mfrc522_write(TPrescalerReg, 0x3E);
-	mfrc522_write(TReloadReg_1, 30);
-	mfrc522_write(TReloadReg_2, 0);
-	mfrc522_write(TxASKReg, 0x40);
-	mfrc522_write(ModeReg, 0x3D);
-	                       
-	/* Originally: Turn on antenna
-	 * If both carrier signals are turned off, turn them on (bits 0 and 1)
-	 */
-	byte = mfrc522_read(TxControlReg);
-	if(!(byte&0x03))
-	{
-		mfrc522_write(TxControlReg,byte|0x03);
-	}
-
-	return;
-}
-
-/*
  * Write one byte of data into a register.
  * This library doesn't use the ability to write multiple bytes at once.
  */
-void mfrc522_write(uint8_t reg, uint8_t data){
+static void mfrc522_write(uint8_t reg, uint8_t data){
 
 	/* Pull the chip select line to 0 */
 	ENABLE_CHIP();
@@ -113,10 +86,39 @@ uint8_t mfrc522_read(uint8_t reg){
 	 */
 	spi_transmit(((reg<<1)&0x7E)|0x80);
 	data = spi_transmit(0x00);
+
 	/* Pull the chip select line to 1 */
 	DISABLE_CHIP();
 	return data;
 }
+/*
+ * Initial device configuration. Set all registers to their desired values,
+ * enable device functionallities ans so on... Also performs a device reset.
+ */
+void mfrc522_init(){
+
+	uint8_t byte;
+	mfrc522_reset();
+	
+	mfrc522_write(TModeReg, 0x8D);
+	mfrc522_write(TPrescalerReg, 0x3E);
+	mfrc522_write(TReloadReg_1, 30);
+	mfrc522_write(TReloadReg_2, 0);
+	mfrc522_write(TxASKReg, 0x40);
+	mfrc522_write(ModeReg, 0x3D);
+	                       
+	/* Originally: Turn on antenna
+	 * If both carrier signals are turned off, turn them on (bits 0 and 1)
+	 */
+	byte = mfrc522_read(TxControlReg);
+	if(!(byte&0x03))
+	{
+		mfrc522_write(TxControlReg,byte|0x03);
+	}
+
+	return;
+}
+
 
 /*
  * This performs a software reset on the MFRC522.
@@ -315,7 +317,6 @@ void mfrc522_setBitMask(uint8_t reg, uint8_t mask){
 	tmp = mfrc522_read(reg);
 	mfrc522_write(reg, tmp | mask);  // set bit mask
 }
-
 /*
  * clear bit mask
  */
@@ -329,8 +330,8 @@ void mfrc522_clearBitMask(uint8_t reg, uint8_t mask){
 /*
  * calculate crc using rc522 chip
  */
-void mfrc522_calculateCRC(uint8_t *pIndata, uint8_t len, uint8_t *pOutData)
-{
+void mfrc522_calculateCRC(uint8_t *pIndata, uint8_t len, uint8_t 
+	*pOutData){
 	uint8_t i, n;
 
 	mfrc522_clearBitMask(DivIrqReg, 0x04);			//CRCIrq = 0
@@ -338,8 +339,8 @@ void mfrc522_calculateCRC(uint8_t *pIndata, uint8_t len, uint8_t *pOutData)
 	//Write_MFRC522(CommandReg, PCD_IDLE);
 
 	// Write len bytes from the parameters to the fifo
-	for (i=0; i<len; i++)
-	{
+	for (i=0; i<len; i++){
+
 		mfrc522_write(FIFODataReg, *(pIndata+i));
 	}
 	mfrc522_write(CommandReg, PCD_CALCCRC);
@@ -363,8 +364,8 @@ void mfrc522_calculateCRC(uint8_t *pIndata, uint8_t len, uint8_t *pOutData)
 /*
  * halt the card (release it to be able to read again)
  */
-uint8_t mfrc522_halt()
-{
+uint8_t mfrc522_halt(){
+
 	uint8_t status;
 	uint32_t unLen;
 	uint8_t buff[4];
@@ -566,23 +567,181 @@ uint8_t mfrc522_select_tag(uint8_t *serNum){
  * ############################################################################
  */
 
-/* Check wether a reader is present
- *
- * **THIS FUNCTION DOES NOT SET THE SELECTED SPI SLAVE FOR YOU!**  
+/* Check wether a reader is present and store it to the given struct
  */
 
-bool mfrc522_check_forreader(){
+bool mfrc522_check_forreader( struct mfrc522_dev_t* dev){
 
+	if(dev == NULL){
+		return false;
+	}else{
+		spi_set_cs(dev->pindesc.car, dev->pindesc.pin);
+	}
+	
 	uint8_t curr_read_status = mfrc522_get_version();
-	if (curr_read_status<0x90 || curr_read_status>0x92)
-	{
+	
+	if(curr_read_status<0x90 || curr_read_status>0x92){
 		/* Reader not really present */
+		
+		dev->reader_present = false;
+		uint8_t dat[sizeof(dev->current_tag)] = {'E', 'R', 'O', 'R'};
+		memcpy(dev->current_tag, dat, sizeof(dev->current_tag));
+		
 		return false;
 	}
+	
+	/* If the IC hasn't been present before, initialize it. */
+	if(!dev->reader_present){
+		mfrc522_init();
+	}
 
+	dev->reader_present = true;
 	return true;
 }
 
-void mfrc522_check_for_all_readers(){
+bool mfrc522_check_forreaders(){
+
+	for(size_t i = 0; i < mfrc_devcnt; i++){
+		
+		mfrc522_check_forreader(&mfrc_devs[i]);
+
+	}
+
+	return true;
+
+}
+
+
+void mfrc522_update_tag(struct mfrc522_dev_t* dev){
+
+	if(dev == NULL){
+		/* WTF? */
+		return;
+	}
+	if(!mfrc522_check_forreader(dev)){
+		/* There isn't really anything here eh? 
+		 */
+		return;
+	}
+	
+	spi_set_cs(dev->pindesc.car, dev->pindesc.pin);
+	uint8_t tag[MFRC_TAGLEN];
+	
+	bool present = rc522_read_card_id(tag);
+
+	if(!present && (dev->retention_counter++ < RETENTION_COUNT)){
+		return;
+	}
+	dev->current_tag_present = present;
+	dev->retention_counter = 0;
+
+	if(dev->current_tag_present){
+		memcpy(dev->current_tag, tag, MFRC_TAGLEN-1);
+	}else{
+		memset(dev->current_tag, 0, MFRC_TAGLEN-1);
+	}
+
+	return;
+}
+
+void mfrc522_update_tags(){
+
+	for(size_t i = 0; i < mfrc_devcnt; i++){
+		
+		mfrc522_update_tag(&mfrc_devs[i]);
+
+	}
+
+	return;
+
+}
+
+void mfrc522_save_tag(struct mfrc522_dev_t* dev){
+
+	
+	memcpy(dev->last_tag, dev->current_tag, sizeof(dev->last_tag));
+	dev->last_tag_present = dev->current_tag_present;
+
+
+	return;
+}
+
+void mfrc522_save_tags(){
+
+	for(size_t i = 0; i < mfrc_devcnt; i++){
+		
+		mfrc522_save_tag(&mfrc_devs[i]);
+
+	}
+
+	return;
+
+}
+
+uint8_t rc522_read_card_id(uint8_t *card_id){
+
+	uint8_t status, resx = 0;
+	uint8_t buff_data[MAX_LEN]; 
+	uint16_t is_present = 0;
+	
+	if(mfrc522_is_card(&is_present)){
+
+		status = mfrc522_get_card_serial(buff_data);
+		if (status==CARD_FOUND){
+			
+			//copy id and checksum in the last byte (5th)
+			memcpy(card_id,buff_data,5);
+			resx = 1;
+		}else{
+
+			resx = 0;
+		}
+	}else{
+
+		resx = 0;
+	}
+	
+	return resx;
+}
+
+/* The write flag inidicates, wether the host should be told what changed or
+ * not. Returns the amount of updates.
+ */
+uint8_t process_mfrc522_update(bool write){
+
+	uint8_t updatecnt = 0;
+
+	
+	for(uint8_t i = 0; i < mfrc_devcnt; i++){
+		
+		struct mfrc522_dev_t* dev = &mfrc_devs[i];
+		
+		if((memcmp(dev->last_tag, dev->current_tag, 
+			sizeof(dev->last_tag)) != 0 ) || 
+			(dev->last_tag_present != dev->current_tag_present)){
+				
+				updatecnt++;	
+				if(!write){
+					continue;
+				}
+				
+				uint8_t *tag = 
+					dev->current_tag;
+
+				uint8_t pay[] = {SPECIALDEV_MFRC522,
+					MFRC522_GET_TAG, i,
+					dev->current_tag_present,
+					tag[3],
+					tag[2],
+					tag[1],
+					tag[0]};
+
+				print_ecp_msg(SPECIAL_INTERACT, pay, 
+					sizeof(pay));
+			}
+
+	}
+
+	return updatecnt;
 
 }

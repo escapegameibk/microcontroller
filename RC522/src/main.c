@@ -17,6 +17,8 @@
 
 #include "serial.h"
 #include "ecproto.h"
+#include "spix.h"
+#include "mfrc522.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -45,13 +47,16 @@ int main(){
 
 	/* initialize the uart connection to the controller */
         serial_init();
+	spi_init();
+
+	mfrc522_check_forreaders();
 	
 	sei();
 	/* Enable the hardware watchdog. In case the microcontroller fails to 
 	 * finish it's task within the specified time, the watchdog will reset
 	 * the atmel cookie.
 	 */
-	wdt_enable(WDTO_4S);
+	wdt_enable(WDTO_1S);
 	
         
 	for(;;){

@@ -18,6 +18,7 @@
 #include "ecproto.h"
 #include "serial.h"
 #include "general.h"
+#include "mfrc522.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -39,7 +40,7 @@ int parse_ecp_msg(const uint8_t* msg){
 		return 0;
 	}
 
-	/* Perced to checksum calculation */
+	/* Perceed to checksum calculation */
 	uint16_t crc_is = ((msg[msg[ECP_LEN_IDX] - 3] & 0xFF) << 8 ) | 
 		(msg[msg[ECP_LEN_IDX] - 2] & 0xFF);
 	uint16_t crc_should = ibm_crc(msg, msg[ECP_LEN_IDX] - 3);
@@ -93,10 +94,39 @@ int parse_ecp_msg(const uint8_t* msg){
 			}
 			break;
 		case REGISTER_LIST:
-			initialized = true;	
 			/* Requested a list of register ids */
 				return print_ecp_msg(REGISTER_LIST, 
 					NULL, 0);
+			break;
+
+		case GET_PURPOSE:
+			initialized = true;	
+			{
+				uint8_t capabilities[] = {
+					
+					SPECIALDEV_MFRC522
+
+				};
+
+				uint8_t dat[sizeof(capabilities) + 
+					sizeof(uint8_t)];
+
+				memcpy(&dat[1], capabilities, 
+					sizeof(capabilities));
+
+				dat[0] = sizeof(capabilities) / sizeof(uint8_t);
+				
+				return print_ecp_msg(GET_PURPOSE, dat,
+					sizeof(dat));
+
+			}
+			break;
+
+		case SPECIAL_INTERACT:
+			/* Special device interaction. Pass on to handler */
+				
+			return handle_special_action(&msg[ECP_PAYLOAD_IDX], (msg[ECP_LEN_IDX] - ECPROTO_OVERHEAD));
+
 			break;
 
 		default:
@@ -192,8 +222,79 @@ int process_updates(){
 		return 1; // It's still successfull.
 	}
 
-	print_ecp_error("TODO");
+	mfrc522_update_tags();
+
+	uint8_t updatecount = process_mfrc522_update(false);
+	print_ecp_msg(SEND_NOTIFY, &updatecount, sizeof(updatecount));
+	process_mfrc522_update(true);
+	mfrc522_save_tags();
 
 	return 0;
 }
 
+/* Please directly hand the received frame's payload to this function.
+ * The handed size is the payload size */
+
+int handle_special_action(const uint8_t* payload, uint8_t length){
+
+	if(length < 1){
+		
+		print_ecp_error("EMPTY 11");
+		return -1;
+
+	}
+
+	if(payload[0] == SPECIALDEV_MFRC522){
+		if(length < 2){
+			print_ecp_error("EMPTY 11");
+			return -1;
+		}
+		
+		if(payload[1] == MFRC522_GET_ALL_DEVS){
+			
+			/* Master requested how many RC522 devices we have. */
+			uint8_t pay[] = {SPECIALDEV_MFRC522, 
+				MFRC522_GET_ALL_DEVS, mfrc_devcnt};
+			return print_ecp_msg(SPECIAL_INTERACT, pay, 
+				sizeof(pay));
+
+		}else if(payload[1] == MFRC522_GET_TAG){
+			
+			if(length < 2 || payload[2] >= mfrc_devcnt){
+				print_ecp_error("NO DEV");
+				return -1;
+			}
+
+			/* Good to fetch data */
+			mfrc522_update_tag(&mfrc_devs[payload[2]]);
+			mfrc522_save_tag(&mfrc_devs[payload[2]]);
+			
+			uint8_t *tag = mfrc_devs[payload[2]].current_tag;
+
+			uint8_t pay[] = {SPECIALDEV_MFRC522, 
+				MFRC522_GET_TAG, payload[2],
+					mfrc_devs[payload[2]].
+						current_tag_present,
+						tag[3],
+						tag[2],
+						tag[1],
+						tag[0]
+					};
+			
+			return print_ecp_msg(SPECIAL_INTERACT, pay, 
+				sizeof(pay));
+
+		}else{
+
+		}
+
+		
+	}else{
+		print_ecp_error("WUT SPECIAL?");
+		return -1;
+		
+	}
+
+	return 0;
+
+}

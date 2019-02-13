@@ -6,8 +6,8 @@ CCC := avr-g++
 RM_RF = rm -rf
 OCPY := avr-objcopy
 AVRDUDE := avrdude
-PORT := /dev/ttyUSB0
-#PORT := usb
+#PORT := /dev/ttyUSB0
+PORT := usb
 #BOARD := atmega328p
 BOARD := atmega2560
 #PROGRAMMER := arduino
@@ -27,7 +27,7 @@ SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-CFLAGS := -mmcu=$(BOARD) -Os -I$(INCLUDEDIR) -Wall -Wextra -D ANALOG_EN -D UART_SECONDARY -D ANALOG_EN
+CFLAGS := -mmcu=$(BOARD) -Os -I$(INCLUDEDIR) -Wall -Wextra
 LDFLAGS := -mmcu=$(BOARD)
 
 # target files

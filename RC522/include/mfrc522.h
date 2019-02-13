@@ -39,6 +39,10 @@
 
 #define MAX_LEN			16
 
+/* This specifies for how many requests a MFRC522 answer is to be stored, before
+ * it is deleted. */
+#define RETENTION_COUNT 5
+
 //Card types
 #define Mifare_UltraLight 	0x4400
 #define Mifare_One_S50		0x0400
@@ -75,13 +79,12 @@ extern uint8_t keyA_default[6];
 extern uint8_t keyB_default[6];
 
 //proto function
-void    mfrc522_init();
-void    mfrc522_reset();
-void    mfrc522_write(uint8_t reg, uint8_t data);
-uint8_t mfrc522_read(uint8_t reg);
+void mfrc522_init();
+void mfrc522_reset();
 uint8_t	mfrc522_request(uint8_t req_mode, uint8_t * tag_type);
 uint8_t mfrc522_to_card(uint8_t cmd, uint8_t *send_data, uint8_t send_data_len, uint8_t *back_data, uint32_t *back_data_len);
 uint8_t mfrc522_get_card_serial(uint8_t * serial_out);
+
 void    mfrc522_setBitMask(uint8_t reg, uint8_t mask);
 void    mfrc522_clearBitMask(uint8_t reg, uint8_t mask);
 void    mfrc522_calculateCRC(uint8_t *pIndata, uint8_t len, uint8_t *pOutData);
@@ -95,18 +98,33 @@ uint8_t mfrc522_select_tag(uint8_t *serNum);
 
 /* Escape game system related */
 
+/* Represents a Card reader connected via SPI. The last entities are needed for
+ * asynchroneous operation. */
 struct mfrc522_dev_t{
-	uint32_t last_tag;
-	uint32_t current_tag;
+	/* The stored values don't contain the last byte, because it is only a
+	 * checksum */
+	uint8_t last_tag[MFRC_TAGLEN - 1];
+	uint8_t current_tag[MFRC_TAGLEN - 1];
 	bool last_tag_present, current_tag_present;
 	struct gpio_pin_t pindesc;
 	bool reader_present;
+	uint8_t retention_counter;
 };
 
 extern struct mfrc522_dev_t mfrc_devs[];
 
 extern uint8_t mfrc_devcnt;
 
-bool mfrc522_check_forreader();
+bool mfrc522_check_forreader(struct mfrc522_dev_t* dev);
+bool mfrc522_check_forreaders();
 
+void mfrc522_update_tag(struct mfrc522_dev_t* dev);
+void mfrc522_update_tags();
+
+void mfrc522_save_tag(struct mfrc522_dev_t* dev);
+void mfrc522_save_tags();
+
+uint8_t rc522_read_card_id(uint8_t *card_id);
+uint8_t process_mfrc522_update(bool write);
 #endif /* MFRC522_H */
+

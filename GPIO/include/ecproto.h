@@ -56,13 +56,18 @@ int process_updates();
 #define SECONDARY_PRINT        0x0C
 #define ADC_GET                0x0D
 #define ADC_GET2               0x0F
-#define EXT_DEV_REG            0x10
-#define EXT_DEV_INT            0x11
+#define GET_PURPOSE            0x10
+#define SPECIAL_INTERACT       0x11
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
 #define ECP_ID_IDX 2
 #define ECP_PAYLOAD_IDX 3
+
+#define SPECIALDEV_GPIO        0x00
+#define SPECIALDEV_OLD_ANALOG  0x01
+#define SPECIALDEV_NEW_ANALOG  0x02
+#define SPECIALDEV_MFRC522     0x03
 
 #endif /* ECPROTO_H */
 
