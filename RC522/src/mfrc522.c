@@ -47,6 +47,8 @@ struct  mfrc522_dev_t mfrc_devs[] = {
 	};
 #endif
 
+volatile bool mfrc522_to_be_updated = false;
+
 uint8_t mfrc_devcnt = sizeof(mfrc_devs) / sizeof(struct mfrc522_dev_t);
 
 uint8_t keyA_default[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
@@ -611,6 +613,19 @@ bool mfrc522_check_forreaders(){
 
 }
 
+void mfrc52_init_readers(){
+	
+	for(size_t i = 0; i < mfrc_devcnt; i++){
+		struct mfrc522_dev_t* dev = &mfrc_devs[i];
+		if(!dev->reader_present){
+			continue;
+		}
+		spi_set_cs(dev->pindesc.car, dev->pindesc.pin);
+		mfrc522_init();
+
+	}
+	
+}
 
 void mfrc522_update_tag(struct mfrc522_dev_t* dev){
 
@@ -710,7 +725,6 @@ uint8_t rc522_read_card_id(uint8_t *card_id){
 uint8_t process_mfrc522_update(bool write){
 
 	uint8_t updatecnt = 0;
-
 	
 	for(uint8_t i = 0; i < mfrc_devcnt; i++){
 		
@@ -731,10 +745,10 @@ uint8_t process_mfrc522_update(bool write){
 				uint8_t pay[] = {SPECIALDEV_MFRC522,
 					MFRC522_GET_TAG, i,
 					dev->current_tag_present,
-					tag[3],
-					tag[2],
+					tag[0],
 					tag[1],
-					tag[0]};
+					tag[2],
+					tag[3]};
 
 				print_ecp_msg(SPECIAL_INTERACT, pay, 
 					sizeof(pay));

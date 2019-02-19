@@ -118,6 +118,8 @@ extern uint8_t mfrc_devcnt;
 bool mfrc522_check_forreader(struct mfrc522_dev_t* dev);
 bool mfrc522_check_forreaders();
 
+void mfrc52_init_readers();
+
 void mfrc522_update_tag(struct mfrc522_dev_t* dev);
 void mfrc522_update_tags();
 
@@ -126,5 +128,6 @@ void mfrc522_save_tags();
 
 uint8_t rc522_read_card_id(uint8_t *card_id);
 uint8_t process_mfrc522_update(bool write);
+
 #endif /* MFRC522_H */
 

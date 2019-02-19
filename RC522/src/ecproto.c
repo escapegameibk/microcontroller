@@ -44,6 +44,7 @@ int parse_ecp_msg(const uint8_t* msg){
 	uint16_t crc_is = ((msg[msg[ECP_LEN_IDX] - 3] & 0xFF) << 8 ) | 
 		(msg[msg[ECP_LEN_IDX] - 2] & 0xFF);
 	uint16_t crc_should = ibm_crc(msg, msg[ECP_LEN_IDX] - 3);
+	
 	if(crc_is != crc_should){
 		print_ecp_error("CRC msmtch");
 		return -2;
@@ -89,14 +90,13 @@ int parse_ecp_msg(const uint8_t* msg){
 			{
 				uint8_t cnt = 0;
 
-				return print_ecp_msg(REGISTER_COUNT, 
-					&cnt, sizeof(cnt));
+				return print_ecp_msg(REGISTER_COUNT, &cnt, 
+					sizeof(cnt));
 			}
 			break;
 		case REGISTER_LIST:
 			/* Requested a list of register ids */
-				return print_ecp_msg(REGISTER_LIST, 
-					NULL, 0);
+				return print_ecp_msg(REGISTER_LIST, NULL, 0);
 			break;
 
 		case GET_PURPOSE:
@@ -116,7 +116,7 @@ int parse_ecp_msg(const uint8_t* msg){
 
 				dat[0] = sizeof(capabilities) / sizeof(uint8_t);
 				
-				return print_ecp_msg(GET_PURPOSE, dat,
+				return print_ecp_msg(GET_PURPOSE, dat, 
 					sizeof(dat));
 
 			}
@@ -222,9 +222,9 @@ int process_updates(){
 		return 1; // It's still successfull.
 	}
 
-	mfrc522_update_tags();
-
 	uint8_t updatecount = process_mfrc522_update(false);
+	
+	
 	print_ecp_msg(SEND_NOTIFY, &updatecount, sizeof(updatecount));
 	process_mfrc522_update(true);
 	mfrc522_save_tags();
@@ -275,10 +275,10 @@ int handle_special_action(const uint8_t* payload, uint8_t length){
 				MFRC522_GET_TAG, payload[2],
 					mfrc_devs[payload[2]].
 						current_tag_present,
-						tag[3],
-						tag[2],
+						tag[0],
 						tag[1],
-						tag[0]
+						tag[2],
+						tag[3]
 					};
 			
 			return print_ecp_msg(SPECIAL_INTERACT, pay, 
@@ -296,5 +296,4 @@ int handle_special_action(const uint8_t* payload, uint8_t length){
 	}
 
 	return 0;
-
 }

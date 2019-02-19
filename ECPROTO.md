@@ -15,7 +15,8 @@ master-slave based protocol. It may be driven over any layer 2 connection.
 # Addressing
 
 The protocol is very well able to address a host, and therefore no buffering
-or any such thing is required. The address is always the SECOND bit transferred.
+or any such thing is required. The address is always the SECOND byte 
+transferred.
 
 ## Byte ordering
 
@@ -28,7 +29,7 @@ https://en.wikipedia.org/wiki/Endianness
 
 The protocol is structured, that the very first byte sent is the total length of
 the frame, and the last byte sent is required to be 0xFF. A frame, where the
-length byte, is not the index + 1 of a 0xFF byte, shoulde be considered invalid
+length byte, is not the index - 1 of a 0xFF byte, shoulde be considered invalid
 and should be discarded. The length is followed by an address.
 Afterwards an action id is sent. Everything after the action id is the action's
 payload. The payload may contain any data, (except for the 0xFF byte, which 
@@ -58,14 +59,7 @@ The parameters may be zero padded in order to avoid the 0xff byte in the
 checksum. Zero padding is required to be supported on any action, independent of
 any hardware changes.
 
-## Sending and receiving
-
-The EC-Proto has an action called "request to send", which may only be SENT from
-a device closer to the master device to the device further away from the master.
-The receiving device is required to respond with the appropriate answer. Please
-consult the section on ids in order to understand the messages sent better.
-
-## Notive on command receiption
+## Notes on command receiption
 
 As any command is required to be answered at any time, it is possible to answer
 a received frame with ANY frame id. It is also possible to, for example, misuse
@@ -134,9 +128,7 @@ second parameter is the 'bit' of the register. The third parameter specifies
 wheter the port should be an "INPUT" or "OUTPUT" by using
 0x00 and 0x01 respectively as byte. It's response should be a frame with
 the same action id, and a boolean indicating success as payload. By default,
-everything is an ouput, and it's state is low. In case a invalid payload is
-received, it is converted to a boolean, which makes everything apart from 0x00
-a 0x01 byte. 
+everything is an ouput, and it's state is low.
 
 ### 6. get port. ID 0x06
 
@@ -202,13 +194,10 @@ RESERVED FOR FUTURE USE
 
 ### 15. Get analog input ID 0x0F
 
-Reads the analog input vaue of a device. The device is responsible for
-handleing any read requests to the desired port. The device should configure at
-runtime which pin should be read. The device may set any actions needed to
-be able to read from the desired pins adccordingly. It may be nescessary for a
-device to disable pins at runtime in order to archieve this. The response to
-this message should consist of a frame with the same id with the adc
-conversion as one byte payload where 255 is the highest and 0 the lowest value.
+Reads the analog input value from the specified channel. The 1 byte payload in
+a master's request specifies the targeted analog input channel. A slave's
+reply has the channel as 1st byte of the payload, and the adc value as 2 byte
+value as 2nd and 3rd byte respectively.
 
 ### 16. Get special device purpose ID 0x10
 

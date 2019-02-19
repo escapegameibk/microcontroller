@@ -50,6 +50,7 @@ int main(){
 	spi_init();
 
 	mfrc522_check_forreaders();
+	mfrc522_update_tags();
 	
 	sei();
 	/* Enable the hardware watchdog. In case the microcontroller fails to 
@@ -82,16 +83,23 @@ int routine(){
 		memset(recv_buf_master, 0, BUFLEN_UART);
 	        sei(); /* < Enable interrupts */
 		command_received = false;
-		master_serial_timeout = 0;
 
-        }else{
-		master_serial_timeout++;
-		if(master_serial_timeout > MASTER_TIMEOUT_THRESHOLD){
-			master_serial_timeout = 0;
-			clear_master_buffer();
+        }
+	
+	static uint8_t mfrc_ptr = 0, update_rounds = 0;
+
+	if(mfrc_ptr >= mfrc_devcnt){
+		mfrc_ptr = 0;
+
+	}else{
+		mfrc522_update_tag(&mfrc_devs[mfrc_ptr++]);
+		if(++update_rounds > 20){
+			/* Send a software reset to all devices. */
+			update_rounds = 0;
+			mfrc52_init_readers();
 		}
-		
 	}
+
 
         return 0;
 }
