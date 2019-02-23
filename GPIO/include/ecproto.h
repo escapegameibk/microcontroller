@@ -58,6 +58,7 @@ int process_updates();
 #define ADC_GET2               0x0F
 #define GET_PURPOSE            0x10
 #define SPECIAL_INTERACT       0x11
+#define SET_PWM                0x12
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
@@ -68,6 +69,7 @@ int process_updates();
 #define SPECIALDEV_OLD_ANALOG  0x01
 #define SPECIALDEV_NEW_ANALOG  0x02
 #define SPECIALDEV_MFRC522     0x03
+#define SPECIALDEV_PWM         0x04
 
 #endif /* ECPROTO_H */
 

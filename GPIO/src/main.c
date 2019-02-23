@@ -18,6 +18,7 @@
 #include "serial.h"
 #include "ecproto.h"
 #include "port.h"
+#include "pwm.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -50,14 +51,16 @@ int main(){
 
 	/* initialize the uart connection to the controller */
         serial_init();
-	
+
+	/* Setup the PWM counters */
+	init_pwm();
+
 	sei();
 	/* Enable the hardware watchdog. In case the microcontroller fails to 
 	 * finish it's task within the specified time, the watchdog will reset
 	 * the atmel cookie.
 	 */
-	wdt_enable(WDTO_4S);
-	
+	wdt_enable(WDTO_4S);	
         
 	while(1){
 		wdt_reset();

@@ -16,6 +16,7 @@
  */
 
 #include "port.h"
+#include "pwm.h"
 #include "ecproto.h"
 
 #include <avr/io.h>
@@ -258,7 +259,8 @@ bool is_pin_blacklisted(char car, uint8_t id){
 		}
 	}
 
-	return false;
+	return is_pwm_pin_blacklisted(car, id);
+
 }
 
 #ifdef ANALOG_EN

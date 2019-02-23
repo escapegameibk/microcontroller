@@ -199,18 +199,33 @@ a master's request specifies the targeted analog input channel. A slave's
 reply has the channel as 1st byte of the payload, and the adc value as 2 byte
 value as 2nd and 3rd byte respectively.
 
-### 16. Get special device purpose ID 0x10
+### 16. Get device capabilities ID 0x10
 
-This function is used to return a special device purpose. 
-Please see the Section
-on Special Devices at the End of this document.
+The 0x10 command may be used on any device to retrieve it's capablilities.
+A master request may use 0x10 as action id and an empty payload to
+request a list of special devices from a slave. A response must start with the
+amount of special device kinds as the very first byte of the payload, followed
+by a list of the specified amount of capability IDs. A NULL-Termination is
+not required. For a list of device capablility IDs please see the device-
+capablilities section at the end of this document.
 
 ### 17. Special device interaction ID 0x11
 
 This function is used for any kind of special device interaction. Please see the
 section on special devices at the end of this document.
 
-# Special Devices
+### 18. PWM SET ID 0x12
+
+This action is used to set the specified PWM output to the desired value. A
+request from the master must have 3 bytes as payload: the first one beeing a
+timer id, the second one beeing the output id, and the third one beeing the
+pwm value between 0 and 255. What combination is what output is microcontroller
+specific and has to be specified by the manufacturer of the device and the
+author of the code, but are required to start at 0. A reply has 1 byte payload
+containing a boolean value which indicates success. The value 0 is special and
+is used to disable PWM on that output.
+
+# Special Devices / Device Capabilities
 
 Whilest developing more and more stuff it became apparent to me, that the 
 microcontroller code was becomeing too complex. To keep it backwards
@@ -220,40 +235,23 @@ dumb. So it was decided, that it was best to separate code for special tasks
 into different code bases, so that it stays maintainable and doesn't look too
 dumb.
 
-## Special devices
+## device capablilities
 
 Some devices have a more special use-case than just plainely GPIO, for example
 controlling multiple SPI-slaves, uart device controllers, etc. Therefore
 special devices hae been introduced to the protocol in order to be flexible
-enough to handle the very strange situations in an escape room.
-
-### Action IDs 0x10 and 0x11
-
-In order to avoid protocol pollution with too many action IDs used up just for
-special device interaction, special device interaction has been limited to
-the IDs 0x10 and 0x11. Any other IDs should be avoided unless it is impractical
-to implement the response that was, for example if the response has to indicate
-something to other clients, or repeaters.
-
-#### Action 0x10
-
-The 0x10 command may be used on any device to retrieve it's available
-special devices. This command may fail with an error response in case the
-command has not been implemented, in which case the slave may be assumed to ONLY
-contain GPIO. A master request may use 0x10 as action id and an empty payload to
-request a list of special devices from a slave. A response must start with the
-amount of special device kinds as the very first byte of the payload, followed
-by a list of the specified amount of special device IDs. A NULL-Termination is
-not required.
+enough to handle the very strange situations in an escape room and the
+corresponding strange hardware. It has therefore been decided to implement a
+way to request what an ECP device is capable of, and a way to handle special
+situations.
 
 #### Special device IDs
 
-The following special device IDs have been specified thus far:
+The following device capablility IDs have been specified thus far:
 
 0. GPIO:
-	A ID of the numeric value 0 specifies that the device is GPIO capable.
-	It is not nescessary for a device to have GPIO capability, though it
-	is required to answer to the register count and register list commands.
+	An ID of the numeric value 0 specifies, that a device is GPIO capable.
+	It is not nescessary for a device to have GPIO capability.
 
 1. OLD ANALOG:
 	An ID of the numeric value 1 specifies that the device is compatiable 
@@ -273,6 +271,9 @@ The following special device IDs have been specified thus far:
 	For further details on how to handle MFRC522 capable devices see
 	the following paragraph on the 0x11 command.
 
+4. PWM:
+	Specifies, that the device supports PWM output.
+
 #### Action 0x11
 
 Commands with the action ID 0x11 are reserved for communication regarding
@@ -280,8 +281,15 @@ special device actions. The entire payload may be imagined as if it was "passed
 on to a submodule an never looked at during transport", by which I want to tell
 you that the payload may contain anything and is entirely special device type
 dependant. A command regarding action 0x11 may ALWAYS contain a payload starting
-with a special device ID which the device previously has been announceing
-through the 0x10 command that it is capable of using it. Communication
+with a capablility ID which the device previously has been announceing
+through the 0x10 command that it is capable of using it.
+
+This command is meant to **ONLY** be used for communication regarding some
+special device which would not be used normally in an escape room. **Any**
+communication regarding more frequently used functions is to be given a
+real action-ID.
+
+Communication
 has been specified for the following special devices:
 
 ##### GPIO:
@@ -296,7 +304,7 @@ ACTIONS!**
 
 ##### MFRC522:
 
-MFRC522 contains after the special device ID, a so called sub-action id, which 
+MFRC522 contains after the capablility ID, a so called sub-action id, which 
 is used to indicate to the slave what the master wants and is exactly 1 octet 
 in lenght. As with a regular command, every request by a master has to be 
 answered with at least one frame. The following sub-commands have to be 
@@ -325,6 +333,9 @@ implemented:
 	equivalent to 0x45524F52 or 1163022162 at base 16 and 10 respectively. 
 	Implementation of this is not nescessary, but may help during 
 	debugging.
+
+##### PWM:
+**NO ACTION MAY BE PERFORMED FOR THIS SUBMODULE! PLEASE USE REGULAR ACTIONS!**
 
 # ERRATA
 

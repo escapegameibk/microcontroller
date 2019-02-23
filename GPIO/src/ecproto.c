@@ -18,6 +18,7 @@
 #include "ecproto.h"
 #include "serial.h"
 #include "port.h"
+#include "pwm.h"
 #include "general.h"
 
 #include <string.h>
@@ -46,7 +47,7 @@ int parse_ecp_msg(const uint8_t* msg){
 	uint16_t crc_should = ibm_crc(msg, msg[ECP_LEN_IDX] - 3);
 	if(crc_is != crc_should){
 		print_ecp_error("CRC msmtch");
-		return -2;
+		return -1;
 	}
 	/* By this point we should have gotten a valid frame. All checksums are
 	 * valid and the frame should have a correct length. Now, let's start
@@ -78,7 +79,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			/* Defines a port direction / writes to the ddr */
 			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
-				return -4;
+				return -1;
 			}
 			return print_success_reply(DEFINE_PORT_ACTION, 
 				write_port_ddr(msg[ECP_PAYLOAD_IDX],
@@ -89,7 +90,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			/* Gets a port */
 			if(msg[ECP_LEN_IDX] <  2 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
-				return -5;
+				return -1;
 			}
 			
 			return print_ecp_pin_update(msg[ECP_PAYLOAD_IDX], 
@@ -102,7 +103,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			/* Defines a port state / writes to the port */
 			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
-				return -6;
+				return -1;
 			}
 
 			return print_success_reply(7,
@@ -124,7 +125,7 @@ int parse_ecp_msg(const uint8_t* msg){
 		{
 			if(msg[ECP_LEN_IDX] < 2 + ECPROTO_OVERHEAD){
 				print_ecp_error("2 few parms");
-				return -7;
+				return -1;
 			}
 			uint8_t pay[] = {msg[ECP_PAYLOAD_IDX], 
 				msg[ECP_PAYLOAD_IDX + 1], 
@@ -178,6 +179,7 @@ int parse_ecp_msg(const uint8_t* msg){
 #ifdef ANALOG_EN
 					,SPECIALDEV_OLD_ANALOG
 #endif /* ANALOG_EN */
+					,SPECIALDEV_PWM
 
 				};
 
@@ -192,6 +194,20 @@ int parse_ecp_msg(const uint8_t* msg){
 					sizeof(dat));
 
 			}
+			break;
+
+		case SET_PWM:
+			
+			if(msg[ECP_LEN_IDX] < 3 + ECPROTO_OVERHEAD){
+				print_ecp_error("2 few parms");
+				return -1;
+			}
+			
+			return print_success_reply(SET_PWM,
+				(set_pwm(msg[ECP_PAYLOAD_IDX], 
+					msg[ECP_PAYLOAD_IDX + 1],
+					msg[ECP_PAYLOAD_IDX + 2]) >= 0));	
+
 			break;
 
 		case SPECIAL_INTERACT:
