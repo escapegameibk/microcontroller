@@ -134,30 +134,26 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 
 	if(counter == 0){
 		
+#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 		if(output == 0){
 			if(value != 0){
 				TCCR0A |= ((1 << COM0A1) | (0 << COM0A0));
 				OCR0A = value;
-#ifdef __AVR_ATmega2560__
-
-#elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 				add_pwm_pin('D', 5);
-#endif
 
 			}else{
 				TCCR0A &= ~((1 << COM0A1) | (1 << COM0A0));
-#ifdef __AVR_ATmega2560__
-
-#elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 				remove_pwm_pin('D', 5);
-#endif
 
 			}
-		}else if(output == 1){
+		}else 
+#endif
+		if(output == 1){
 			if(value != 0){
 				TCCR0A |= ((1 << COM0B1) | (0 << COM0B0));
 				OCR0B = value;
 #ifdef __AVR_ATmega2560__
+				add_pwm_pin('G', 5);
 
 #elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 				add_pwm_pin('D', 6);
@@ -166,6 +162,7 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 			}else{
 				TCCR0A &= ~((1 << COM0B1) | (1 << COM0B0));
 #ifdef __AVR_ATmega2560__
+				remove_pwm_pin('G', 5);
 
 #elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 				remove_pwm_pin('D', 6);
@@ -184,6 +181,7 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 				TCCR1A |= ((1 << COM1A1) | (0 << COM1A0));
 				OCR1A = value;
 #ifdef __AVR_ATmega2560__
+				add_pwm_pin('B', 5);
 
 #elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 				add_pwm_pin('B', 1);
@@ -192,6 +190,7 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 			}else{
 				TCCR1A &= ~((1 << COM1A1) | (1 << COM1A0));
 #ifdef __AVR_ATmega2560__
+				remove_pwm_pin('B', 5);
 
 #elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 				remove_pwm_pin('B', 1);
@@ -203,6 +202,7 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 				TCCR1A |= ((1 << COM1B1) | (0 << COM1B0));
 				OCR1B = value;
 #ifdef __AVR_ATmega2560__
+				add_pwm_pin('B', 6);
 
 #elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 				add_pwm_pin('B', 2);
@@ -211,6 +211,7 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 			}else{
 				TCCR1A &= ~((1 << COM1B1) | (1 << COM1B0));
 #ifdef __AVR_ATmega2560__
+				remove_pwm_pin('B', 6);
 
 #elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 				remove_pwm_pin('B', 2);
@@ -222,9 +223,11 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 			if(value != 0){
 				TCCR1A |= ((1 << COM1C1) | (0 << COM1C0));
 				OCR1C = value;
+				add_pwm_pin('B', 7);
 
 			}else{
 				TCCR1A &= ~((1 << COM1C1) | (1 << COM1C0));
+				remove_pwm_pin('B', 7);
 
 			}
 
@@ -240,18 +243,22 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 			if(value != 0){
 				TCCR2A |= ((1 << COM2A1) | (0 << COM2A0));
 				OCR2A = value;
+				add_pwm_pin('B', 4);
 
 			}else{
 				TCCR2A &= ~((1 << COM2A1) | (1 << COM2A0));
+				remove_pwm_pin('B', 4);
 
 			}
 		}else if(output == 1){
 			if(value != 0){
 				TCCR2A |= ((1 << COM2B1) | (0 << COM2B0));
 				OCR2B = value;
+				add_pwm_pin('H', 6);
 
 			}else{
 				TCCR2A &= ~((1 << COM2B1) | (1 << COM2B0));
+				remove_pwm_pin('H', 6);
 
 			}
 		}else{
@@ -263,27 +270,33 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 			if(value != 0){
 				TCCR3A |= ((1 << COM3A1) | (0 << COM3A0));
 				OCR3A = value;
+				add_pwm_pin('E', 3);
 
 			}else{
 				TCCR3A &= ~((1 << COM3A1) | (1 << COM3A0));
+				remove_pwm_pin('E', 3);
 
 			}
 		}else if(output == 1){
 			if(value != 0){
 				TCCR3A |= ((1 << COM3B1) | (0 << COM3B0));
 				OCR3B = value;
+				add_pwm_pin('E', 4);
 
 			}else{
 				TCCR3A &= ~((1 << COM3B1) | (1 << COM3B0));
+				remove_pwm_pin('E', 4);
 
 			}
 		}else if(output == 2){
 			if(value != 0){
 				TCCR3A |= ((1 << COM3C1) | (0 << COM3C0));
 				OCR3C = value;
+				add_pwm_pin('E', 5);
 
 			}else{
 				TCCR3A &= ~((1 << COM3C1) | (1 << COM3C0));
+				remove_pwm_pin('E', 5);
 
 			}
 
@@ -296,27 +309,33 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 			if(value != 0){
 				TCCR4A |= ((1 << COM4A1) | (0 << COM4A0));
 				OCR4A = value;
+				add_pwm_pin('H', 3);
 
 			}else{
 				TCCR4A &= ~((1 << COM4A1) | (1 << COM4A0));
+				remove_pwm_pin('H', 3);
 
 			}
 		}else if(output == 1){
 			if(value != 0){
 				TCCR4A |= ((1 << COM4B1) | (0 << COM4B0));
 				OCR4B = value;
+				add_pwm_pin('H', 4);
 
 			}else{
 				TCCR4A &= ~((1 << COM4B1) | (1 << COM4B0));
+				remove_pwm_pin('H', 4);
 
 			}
 		}else if(output == 2){
 			if(value != 0){
 				TCCR4A |= ((1 << COM4C1) | (0 << COM4C0));
 				OCR4C = value;
+				add_pwm_pin('H', 5);
 
 			}else{
 				TCCR4A &= ~((1 << COM4C1) | (1 << COM4C0));
+				remove_pwm_pin('H', 5);
 
 			}
 
@@ -329,27 +348,33 @@ int set_pwm(uint8_t counter, uint8_t output, uint8_t value){
 			if(value != 0){
 				TCCR5A |= ((1 << COM5A1) | (0 << COM5A0));
 				OCR5A = value;
+				add_pwm_pin('L', 3);
 
 			}else{
 				TCCR5A &= ~((1 << COM5A1) | (1 << COM5A0));
+				remove_pwm_pin('L', 3);
 
 			}
 		}else if(output == 1){
 			if(value != 0){
 				TCCR5A |= ((1 << COM5B1) | (0 << COM5B0));
 				OCR5B = value;
+				add_pwm_pin('L', 4);
 
 			}else{
 				TCCR5A &= ~((1 << COM5B1) | (1 << COM5B0));
+				remove_pwm_pin('L', 4);
 
 			}
 		}else if(output == 2){
 			if(value != 0){
 				TCCR5A |= ((1 << COM5C1) | (0 << COM5C0));
 				OCR5C = value;
+				add_pwm_pin('L', 5);
 
 			}else{
 				TCCR5A &= ~((1 << COM5C1) | (1 << COM5C0));
+				remove_pwm_pin('L', 5);
 
 			}
 
