@@ -188,7 +188,7 @@ int write_port(char id, uint8_t bit, bool value){
 
 	/* Should be fine */
 	if(!!value){
-		*bank->port |= (!!value) << bit;
+		*bank->port |= (1 << bit);
 	}else{
 		*bank->port &= ~(1 << bit);
 	}
@@ -213,9 +213,9 @@ int write_port_ddr(char id, uint8_t bit, bool value){
 		/* Not allowed to write to pin */
 		return -3;
 	}
-
+	
 	if(!!value){
-		*bank->ddir |= (1) << bit;
+		*bank->ddir |= (1 << bit);
 	}else{
 		*bank->ddir &= ~(1 << bit);
 	}

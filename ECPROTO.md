@@ -223,7 +223,30 @@ pwm value between 0 and 255. What combination is what output is microcontroller
 specific and has to be specified by the manufacturer of the device and the
 author of the code, but are required to start at 0. A reply has 1 byte payload
 containing a boolean value which indicates success. The value 0 is special and
-is used to disable PWM on that output.
+is used to disable PWM on that output. Enabled by the PWM extension
+
+### 19. Get GPIO Registers 0x13
+
+This action is used to get the specified GPIO Registers. A request with this
+action requires only 1 parameter, the GPIO register ID. A reply with this ID
+has 4 parameters. The first one is the GPIO register ID, the second one is the
+GPIO Data Direction Register, the third one is the GPIO PORT Register, and the
+fourth one is the GPIO PIN register. Enabled by the faster GPIO extension.
+
+### 20. Get GPIO Registers 0x14
+
+This action is used to set the specified GPIO registers to the desired values.
+A request contains 3 parameters. The first one beeing the register ID, the
+second one beeing the GPIO DDIR registerand the third one the GPIO PORT 
+register. Enabled by the faster GPIO extension.
+
+### 21. Get disabled pins 0x15
+
+This action is used to get all disabled pins. A request with this id doesn't
+contain any parameters. A reply with this ID is INVALID. A response should
+announce the amount of pin disables via the send notify action. Enabled by the
+faster GPIO extension.
+
 
 # Special Devices / Device Capabilities
 
@@ -233,7 +256,7 @@ compatiable the devices basically needed to be able to do basically anything,
 and I was planning to enable any device to perform any task, which was pretty
 dumb. So it was decided, that it was best to separate code for special tasks
 into different code bases, so that it stays maintainable and doesn't look too
-dumb.
+dumb.5
 
 ## device capablilities
 
@@ -273,6 +296,9 @@ The following device capablility IDs have been specified thus far:
 
 4. PWM:
 	Specifies, that the device supports PWM output.
+5. FASTER GPIO:
+	Specifies, that the device supports the faster GPIO access
+	routines.
 
 #### Action 0x11
 
@@ -335,6 +361,9 @@ implemented:
 	debugging.
 
 ##### PWM:
+**NO ACTION MAY BE PERFORMED FOR THIS SUBMODULE! PLEASE USE REGULAR ACTIONS!**
+
+##### FASTER GPIO:
 **NO ACTION MAY BE PERFORMED FOR THIS SUBMODULE! PLEASE USE REGULAR ACTIONS!**
 
 # ERRATA
