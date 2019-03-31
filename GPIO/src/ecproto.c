@@ -180,6 +180,7 @@ int parse_ecp_msg(const uint8_t* msg){
 					,SPECIALDEV_OLD_ANALOG
 #endif /* ANALOG_EN */
 					,SPECIALDEV_PWM
+					,SPECIALDEV_FAST_GPIO
 
 				};
 
@@ -210,6 +211,40 @@ int parse_ecp_msg(const uint8_t* msg){
 
 			break;
 
+		case GET_GPIO_REGS:
+			if(msg[ECP_LEN_IDX] < 1 + ECPROTO_OVERHEAD){
+				print_ecp_error("2 few parms");
+				return -1;
+			}
+			return print_ecp_regs(msg[ECP_PAYLOAD_IDX]);
+			break;
+		
+		case SET_GPIO_REGS:
+			
+			if(msg[ECP_LEN_IDX] < 3 + ECPROTO_OVERHEAD){
+				print_ecp_error("2 few parms");
+				return -1;
+			}
+			
+			return print_success_reply(SET_GPIO_REGS,
+				(set_ecp_regs(msg[ECP_PAYLOAD_IDX], 
+					msg[ECP_PAYLOAD_IDX + 1],
+					msg[ECP_PAYLOAD_IDX + 2]) >= 0));	
+			
+
+			break;
+		case GET_DISABLED_PINS:
+		{
+			uint8_t updatecnt = get_disabled_gpios(false);
+			print_ecp_msg(SEND_NOTIFY, &updatecnt,
+				sizeof(updatecnt));
+			
+			get_disabled_gpios(true);
+			
+
+
+		}	
+			break;
 		case SPECIAL_INTERACT:
 		/* Special device interactions are NOT handled, because gpio
 		 * actions are regular ECP actions!
@@ -224,6 +259,7 @@ int parse_ecp_msg(const uint8_t* msg){
 	return 0;
 	
 }
+
 
 /* Please use this function as RARELY as possible. The AVR copies all of it's
  * strings into ram during startup. Due to this, it is NOT recommended to
@@ -259,6 +295,35 @@ int print_adc(){
 }
 
 #endif /* ANALOG */
+
+int print_ecp_regs(char car){
+
+	const struct gpio_register_t* reg =  get_port_reg_by_id(car);
+	
+	if(reg == NULL){
+		return print_ecp_error("NOREG");
+	}
+
+	uint8_t pay[] = {reg->car, *reg->ddir, *reg->port, *reg->pin};
+
+	return print_ecp_msg(GET_GPIO_REGS, pay ,sizeof(pay));
+
+}
+
+int set_ecp_regs(char car, uint8_t ddir, uint8_t port){
+
+	const struct gpio_register_t* reg =  get_port_reg_by_id(car);
+	
+	if(reg == NULL){
+		return false;
+	}
+	
+	*reg->ddir = ddir;
+	*reg->port = port;
+
+	return true;
+
+}
 
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){
 

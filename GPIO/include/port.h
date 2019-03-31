@@ -58,4 +58,7 @@ bool is_pin_blacklisted(char car, uint8_t id);
 #ifdef ANALOG_EN
 uint8_t get_adc();
 #endif /* ANALOG_EN */
+
+uint8_t get_disabled_gpios(bool send);
+
 #endif /* PORT_H */

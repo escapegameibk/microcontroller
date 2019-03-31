@@ -30,12 +30,16 @@
 
 int parse_ecp_msg(const uint8_t* msg);
 
+
+
 int print_ecp_error(char* string);
 int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target);
 int print_success_reply(uint8_t action_id, bool success);
 #ifdef ANALOG
 int print_adc();
 #endif /* ANALOG */
+int print_ecp_regs(char car);
+int set_ecp_regs(char car, uint8_t ddir, uint8_t port);
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length);
 
 uint16_t ibm_crc(const uint8_t* data, size_t len);
@@ -59,6 +63,9 @@ int process_updates();
 #define GET_PURPOSE            0x10
 #define SPECIAL_INTERACT       0x11
 #define SET_PWM                0x12
+#define GET_GPIO_REGS          0x13
+#define SET_GPIO_REGS          0x14
+#define GET_DISABLED_PINS      0x15
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
@@ -70,6 +77,7 @@ int process_updates();
 #define SPECIALDEV_NEW_ANALOG  0x02
 #define SPECIALDEV_MFRC522     0x03
 #define SPECIALDEV_PWM         0x04
+#define SPECIALDEV_FAST_GPIO   0x05
 
 #endif /* ECPROTO_H */
 

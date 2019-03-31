@@ -82,6 +82,9 @@ void remove_pwm_pin(char car, uint8_t bit){
 			
 		}
 	}
+	
+	write_port_ddr(car, bit, 1);
+	write_port(car, bit, 0);
 
 	/* Yeah whatever */
 	

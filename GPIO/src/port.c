@@ -67,7 +67,6 @@ const struct gpio_pin_t gpio_disabled_pins[] = {
 };
 #endif
 
-
 #ifdef __AVR_ATmega2560__ 
 const struct gpio_pin_t gpio_disabled_pins[] ={
 #if  defined (UART_SECONDARY)
@@ -276,3 +275,31 @@ uint8_t get_adc(){
 	return val;
 }
 #endif /* ANALOG_EN */
+
+uint8_t get_disabled_gpios(bool send){
+	
+	uint8_t amount = 0;
+	
+	for(size_t i = 0; i < (sizeof(gpio_disabled_pins) / 
+		sizeof(struct gpio_pin_t)); i++){
+		if(send){
+			const struct gpio_pin_t* pin = &gpio_disabled_pins[i];
+			uint8_t dis_pay[] = {pin->car, pin->pin, false};
+			print_ecp_msg(PIN_ENABLED, dis_pay, 
+				sizeof(dis_pay));
+		}
+		amount++;
+	}
+
+	for(size_t i = 0; i < current_pwm_count; i++){
+		if(send){
+			const struct gpio_pin_t* pin = &active_pwm_pins[i];
+			uint8_t dis_pay[] = {pin->car, pin->pin, false};
+			print_ecp_msg(PIN_ENABLED, dis_pay, 
+				sizeof(dis_pay));
+		}
+		amount++;
+	}
+	
+	return amount;
+}
