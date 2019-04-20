@@ -171,7 +171,7 @@ should be 0 if the pin is disabled, and 1 if the pin is enabled.
 
 ### 12. Print string to secondary connection ID 0x0C
 
-Print some string to a secondary serial connection. Where and what the secondary 
+Print some string to a secondary serial connection. Where and what the secondary
 connection is is implementaion defined. It may be anything. It takes as a
 parameter a null terminated string, and transfers it to the secondary 
 connection. The NULL-Terminator is NOT transmitted. Its response consists of a
@@ -181,16 +181,20 @@ frame with the same id and a boolean indicating success as a payload.
 
 Request an analog value from a slave. What that analog value may be is not the
 concern of the master, though the masterm ay have influenced this value by some
-other means. This request requires no parameters. Its response consists of a 
+other means. This request requires no parameters. It's response consists of a
 frame with the same id and a 8-bit value of the analog-digital converter, where
 255 is the highest, and 0 the lowest value.
 
-**As of 2018-12 this command is deprecated. Please use commands 0x0F for any new
-features**
+**As of 2018-12 this command is deprecated. Please use commands 0x0E-0xF for any
+new features**
 
-### 14. RESERVED ID 0x0E
+### 14. Register analog inputs ID 0x0E
 
-RESERVED FOR FUTURE USE
+Used to tell the slave that analog pins update should be transmitted to the
+master if nescessary. A request with this id should have as first byte of the
+payload an id indicateing the amount of analog channels used. The following
+bytes should contain the needed analog channel IDs. A reply has only 1 byte
+payload, which indicates success.
 
 ### 15. Get analog input ID 0x0F
 
@@ -233,7 +237,7 @@ has 4 parameters. The first one is the GPIO register ID, the second one is the
 GPIO Data Direction Register, the third one is the GPIO PORT Register, and the
 fourth one is the GPIO PIN register. Enabled by the faster GPIO extension.
 
-### 20. Get GPIO Registers 0x14
+### 20. Set GPIO Registers 0x14
 
 This action is used to set the specified GPIO registers to the desired values.
 A request contains 3 parameters. The first one beeing the register ID, the
@@ -402,4 +406,29 @@ wasn't planned). When i disabled the pullup resistors, the ADC spit out nothing.
 It never gave back anything. The board of the orphanage NEEDS the pullup
 resistors to be activated.
 
+## Why doesn't it respond?
 
+TLDR; Keeping things in sync is hard. Really hard. And slow. Use the faster GPIO
+extension when you can!
+
+What do you do when an error occures? What do you do when for whatever reason
+a message get's lost whilest travelling from the master to the slaves or
+vice versa? That is a real problem when building a cache: keeping the cache
+up to date. That's why after a lost message the escape game system host
+runs all of it's initialisation routines again. In an error he locks everything
+and prevents any function interacting with the cache from returning, so no
+accidental accesses are possible. That's why the initialisation routines need to
+be moderately fast. They don't need to be extremely fast, but at least in a
+measureable amount of time. With only 3 GPIO registers this wasn't a problem
+on an ATMega328 and on the previous installations we never exceeded more than
+one ATMega2560, which has, by the way, Registers from A downto L. But now we
+have a new installation which has 3 of em. That's a fucking lot. It took the
+game around 20s++ to run all of it's initialisation routines. You want to
+know what took the game so long? GPIO syncing. Because of the way we previously
+synced GPIO, we listed a slave's registers and then iterated through all
+single parts of information the device would be able to offer us, for example,
+set the DDIR, set the PORT, read the enable state get the PIN state, etc. This
+is, by it's definition, slow as hell. That's why for our newest game the faster
+GPIO extension was made. By this GPIO can be accessed register wise, and
+pin-disables can be got at once and don't need to be checked for every pin.
+Init sequences are now down to 3s max. So that's a thing...

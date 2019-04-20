@@ -40,6 +40,7 @@ void get_mcusr(void)
 bool initialized = false;
 
 int routine();
+
 int main(){
 
 	/* Disable interrupts during initialisation phase */	
@@ -69,6 +70,12 @@ int main(){
         return 0;
 }
 
+/**
+ * \brief Function called routinely
+ * 
+ * Never returning function called by main
+ *
+ */
 int routine(){
 
         if(command_received){

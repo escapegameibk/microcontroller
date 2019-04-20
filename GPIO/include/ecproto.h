@@ -59,6 +59,7 @@ int process_updates();
 #define	PIN_ENABLED            0x0B
 #define SECONDARY_PRINT        0x0C
 #define ADC_GET                0x0D
+#define ADC_REG                0x0E
 #define ADC_GET2               0x0F
 #define GET_PURPOSE            0x10
 #define SPECIAL_INTERACT       0x11

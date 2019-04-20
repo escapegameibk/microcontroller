@@ -22,11 +22,24 @@
 #ifndef PORT_H
 #define PORT_H
 
+/*!
+ * \brief GPIO Register description.
+ *
+ * Fully describes a GPIO banks register(s). A Bank consisting of 8 GPIO
+ * pins with it's PORT, DDR and PIN register are fully described by this, and
+ * are selected by this.
+ */
 struct gpio_register_t{
-	unsigned volatile char* port;
-	unsigned volatile char* ddir;
-	unsigned volatile char* pin;
-	char car;
+	unsigned volatile char* port; /*!< register pointer for the PORT 
+					register */
+
+	unsigned volatile char* ddir; /*!< register pointer for the DDIR
+					 register */
+	unsigned volatile char* pin; /*!< register pointer for the PIN register
+					*/
+	char car; /*!< A character describing what GPIO bank is used, e.g. 
+	PORTA */
+
 };
 
 struct gpio_pin_t{
@@ -34,7 +47,11 @@ struct gpio_pin_t{
 	uint8_t pin; /* [0; 8[ */
 };
 
-/* This struct is used to completely describe one single GPIO pin */
+/*! \brief This struct is used to fastly describe one single GPIO pin
+ * 
+ * This struct is used to describe a GPIO pin. a reference to the bank 
+ * description is saved directly, so that it can be accessed without a delay.
+ */
 struct gpio_pin_desc_t{
 	const struct gpio_register_t* reg;
 	uint8_t bit; /* [0; 8[ */

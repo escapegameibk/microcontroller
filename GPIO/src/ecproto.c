@@ -18,6 +18,7 @@
 #include "ecproto.h"
 #include "serial.h"
 #include "port.h"
+#include "analog.h"
 #include "pwm.h"
 #include "general.h"
 
@@ -235,6 +236,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			break;
 		case GET_DISABLED_PINS:
 		{
+			initialized = true;
 			uint8_t updatecnt = get_disabled_gpios(false);
 			print_ecp_msg(SEND_NOTIFY, &updatecnt,
 				sizeof(updatecnt));
@@ -245,6 +247,38 @@ int parse_ecp_msg(const uint8_t* msg){
 
 		}	
 			break;
+
+		case ADC_REG:
+			/* Register new ADC channels */
+
+			return print_success_reply(ADC_REG,
+				register_new_adc_channels(msg) >= 0);
+
+			break;
+		
+		case ADC_GET2:
+
+			{
+				int16_t res = read_adc(msg[ECP_PAYLOAD_IDX]);
+				if(res < 0){
+					print_ecp_error("adc err");
+					return -1;
+					
+				}else{
+					uint8_t payload[] = {
+						
+						msg[ECP_PAYLOAD_IDX],
+						((res >> 8) & 0xFF),
+						(res & 0xFF)
+					};
+					
+					return print_ecp_msg(ADC_GET2, payload,
+						sizeof(payload));
+				}
+			}
+
+			break;
+
 		case SPECIAL_INTERACT:
 		/* Special device interactions are NOT handled, because gpio
 		 * actions are regular ECP actions!
@@ -327,6 +361,7 @@ int set_ecp_regs(char car, uint8_t ddir, uint8_t port){
 
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){
 
+	/* Loaded during startup. Contained in the .bss section --> HEAP */
 	static uint8_t frame[255];
 	memset(frame,0, 255);
 	
@@ -396,9 +431,11 @@ int process_updates(){
 	if(update_pins() < 0){
 		print_ecp_error("updt fail");
 	}
-	uint8_t updatecnt = 0xFF & port_updates(false);
+	uint8_t updatecnt = (0xFF & port_updates(false)) + 
+		get_new_adc_updates(false);
+
 	print_ecp_msg(SEND_NOTIFY, &updatecnt, sizeof(uint8_t));
 	
-	return port_updates(true);
+	return port_updates(true) | get_new_adc_updates(true);
 }
 

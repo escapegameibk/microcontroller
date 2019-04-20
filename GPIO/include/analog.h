@@ -1,6 +1,6 @@
-/* general data for the arduino 
+/* ADC conversion and storage
  * Copyright © 2018 tyrolyean
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,21 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DATA_H
-#define DATA_H
-
+#include <stddef.h>
+#include <stdint.h>
 #include <stdbool.h>
 
-#define F_CPU 16000000
+#ifndef ANALOG_H
+#define ANALOG_H
 
-#define UART_BAUD_RATE 38400UL
+struct adc_channel_t{
+	uint16_t old_value;
+	uint16_t new_value;
+	bool active;
+};
 
-#define ECP_DEVICE_ID 0
-#define ECP_LAST_DEV true
+extern struct adc_channel_t adc_channels[];
 
-#define MAX_RC522_DEVS
+uint8_t get_new_adc_updates(bool send);
+int register_new_adc_channels(const uint8_t* frame);
+int16_t read_adc(const uint8_t channel);
 
-extern bool initialized; /*!< Indicated, wether the µc has been initialized.
-			  *  error inidication on reset */
-
-#endif
+#endif /* ANALOG_H */
