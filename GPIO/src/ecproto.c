@@ -182,6 +182,7 @@ int parse_ecp_msg(const uint8_t* msg){
 #endif /* ANALOG_EN */
 					,SPECIALDEV_PWM
 					,SPECIALDEV_FAST_GPIO
+					,SPECIALDEV_NEW_ANALOG
 
 				};
 
@@ -418,6 +419,7 @@ uint16_t ibm_crc(const uint8_t* data, size_t len){
 }
 
 int process_updates(){
+
 	if(!initialized){
 		/* In case the µc has not yet been initialized. Most likely to
 		 * happen in case the microcontroller has been reset. The
@@ -433,7 +435,7 @@ int process_updates(){
 	}
 	uint8_t updatecnt = (0xFF & port_updates(false)) + 
 		get_new_adc_updates(false);
-
+	
 	print_ecp_msg(SEND_NOTIFY, &updatecnt, sizeof(uint8_t));
 	
 	return port_updates(true) | get_new_adc_updates(true);
