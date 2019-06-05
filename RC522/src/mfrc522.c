@@ -29,7 +29,9 @@
 #if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 
 struct  mfrc522_dev_t mfrc_devs[] = {
+#ifndef SEND_PIN
 	{{0,0,0,0},{0,0,0,0},false,false,{'D',2}, false, 0},
+#endif
 	{{0,0,0,0},{0,0,0,0},false,false,{'D',3}, false, 0},
 	{{0,0,0,0},{0,0,0,0},false,false,{'D',4}, false, 0},
 	{{0,0,0,0},{0,0,0,0},false,false,{'D',5}, false, 0},

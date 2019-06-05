@@ -71,11 +71,24 @@ void clear_master_buffer(){
 
 int write_frame_to_master(const uint8_t* frame){
 	
+#ifdef SEND_PIN
+	
+	PORTD |= 1 << 2;
+
+#endif
 	for(uint8_t i = 0; i < frame[0]; i++){
 		
 		while( !(UCSR0A & (1<<UDRE0)) ); /* Wait for UDR to get ready */
 		UDR0 = frame[i];                       /* send */
 	}
+		
+	while( !(UCSR0A & (1<<UDRE0)) ); /* Wait for UDR to get ready */
+
+#ifdef SEND_PIN
+	
+	PORTD |= 1 << 2;
+
+#endif
 
 	return 0;
 
@@ -105,6 +118,13 @@ void uart_init_master(){
  
 	UCSR0B = (1<<RXEN0) | (1<<TXEN0) | (1 << RXCIE0);                /* Enable receive and transmit */
         UCSR0C = (1<<UCSZ01) | (1<<UCSZ00); /* 8 data bits, 1 stop bit */
+
+#ifdef SEND_PIN
+	
+	DDRD |= 1 << 2;
+	PORTD |= 1 << 2;
+
+#endif
 
         return;
 
