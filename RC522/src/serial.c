@@ -62,6 +62,12 @@ ISR(USART_RX_vect){
 
 	master_serial_timeout = 0;
 
+#ifdef SEND_PIN
+	
+	PORTD &= ~(1 << 2);
+
+#endif
+
 }
 
 void clear_master_buffer(){
@@ -73,9 +79,10 @@ int write_frame_to_master(const uint8_t* frame){
 	
 #ifdef SEND_PIN
 	
-	PORTD &= ~(1 << 2);
+	PORTD |= 1 << 2;
 
 #endif
+
 	for(uint8_t i = 0; i < frame[0]; i++){
 		
 		while( !(UCSR0A & (1<<UDRE0)) ); /* Wait for UDR to get ready */
@@ -86,7 +93,7 @@ int write_frame_to_master(const uint8_t* frame){
 
 #ifdef SEND_PIN
 	
-	PORTD |= 1 << 2;
+	PORTD &= ~(1 << 2);
 
 #endif
 
