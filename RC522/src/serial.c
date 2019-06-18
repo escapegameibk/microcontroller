@@ -73,7 +73,7 @@ int write_frame_to_master(const uint8_t* frame){
 	
 #ifdef SEND_PIN
 	
-	PORTD |= 1 << 2;
+	PORTD &= ~(1 << 2);
 
 #endif
 	for(uint8_t i = 0; i < frame[0]; i++){
