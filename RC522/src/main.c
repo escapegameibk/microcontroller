@@ -106,6 +106,12 @@ int routine(){
 			mfrc52_init_readers();
 		}
 	}
+	
+
+	if(master_serial_timeout++ > 10000){
+		master_serial_timeout = 0;
+		clear_master_buffer();
+	}
 
 
         return 0;

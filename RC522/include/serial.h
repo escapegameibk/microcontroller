@@ -19,6 +19,7 @@
 #define SERIAL_H
 
 #include "general.h"
+#include "ecproto.h"
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
@@ -55,5 +56,27 @@ int write_string_to_secondary(const char* str);
 void uart_init_2();
 
 #endif /* UART_SECONDARY */
+
+static inline void consume_uart_master_byte(uint8_t byte){
+
+	if(recv_crsr_master == 0xFF && byte == 0xFF){
+		clear_master_buffer();
+		return;
+	}else if(recv_crsr_master == 0xFF){
+		return;
+	}
+
+	recv_buf_master[recv_crsr_master++] = byte;
+	if(recv_buf_master[recv_crsr_master - 1] == CMD_DELIMITER && 
+		recv_buf_master[ECP_LEN_IDX] <= recv_crsr_master + 1){
+		
+		recv_crsr_master = 0;
+		command_received = true;
+	}
+
+	master_serial_timeout = 0;
+
+	return;
+}
 
 #endif

@@ -24,9 +24,8 @@
 
 #define UART_BAUD_RATE 38400UL
 
-#define ECP_DEVICE_ID 0x0A
+#define ECP_DEVICE_ID 0x08
 
-#define MAX_RC522_DEVS
 
 extern bool initialized; /*!< Indicated, wether the µc has been initialized.
 			  *  error inidication on reset */

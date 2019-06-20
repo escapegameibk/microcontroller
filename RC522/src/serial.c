@@ -48,6 +48,7 @@ void serial_init(){
 	clear_master_buffer();
         return;
 }
+
 /*
  * the interrupt service routine for the uart controller
  * it ready 1 byte and saves it at the end of the buffer. On revceive
@@ -56,24 +57,13 @@ void serial_init(){
 #ifdef __AVR_ATmega2560__
 ISR(USART0_RX_vect){
 #elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
-ISR(USART_RX_vect){	
+ISR(USART_RX_vect){
 #endif /* ATMEGA TYPE SWITCH */
 	
-	recv_buf_master[recv_crsr_master++] = UDR0;
-	if(recv_buf_master[recv_crsr_master - 1] == CMD_DELIMITER && 
-		recv_buf_master[ECP_LEN_IDX] <= recv_crsr_master + 1){
-		
-		recv_crsr_master = 0;
-		command_received = true;
-	}
+	uint8_t dat = UDR0;
+	consume_uart_master_byte(dat);
 
-	master_serial_timeout = 0;
 
-#ifdef SEND_PIN
-	
-	PORTD &= ~(1 << 2);
-
-#endif
 
 }
 
@@ -89,7 +79,6 @@ int write_frame_to_master(const uint8_t* frame){
 	PORTD |= 1 << 2;
 
 #endif
-
 	for(uint8_t i = 0; i < frame[0]; i++){
 		
 		while( !(UCSR0A & (1<<UDRE0)) ); /* Wait for UDR to get ready */

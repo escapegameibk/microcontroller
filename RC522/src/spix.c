@@ -68,7 +68,12 @@ void spi_init(){
 uint8_t spi_transmit(uint8_t data){
 	
 	SPDR = data;
-	while(!(SPSR & (1<<SPIF)));
+	cli();
+	while(!(SPSR & (1<<SPIF))){
+		if(UCSR0A & (1<<RXC0)){
+			consume_uart_master_byte(UDR0);
+		}
+	}
 
 	return SPDR;
 }
