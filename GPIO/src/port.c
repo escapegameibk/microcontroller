@@ -58,12 +58,8 @@ const struct gpio_register_t gpio_registers[] = {
 #if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 
 const struct gpio_pin_t gpio_disabled_pins[] = {
-#if  defined (UART_SECONDARY)
-{'H', 0},	/* USART2 RXD */
-{'H', 1},	/* USART2 TXD */
-#endif /* UART_SECONDARY */
-{'E', 0},	/* USART0 RXD */
-{'E', 1}	/* USART0 TXD */
+{'D', 0},	/* USART0 RXD */
+{'D', 1}	/* USART0 TXD */
 };
 #endif
 

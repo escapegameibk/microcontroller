@@ -1,6 +1,7 @@
 /* serial interface for communication with a host
 
  * Copyright © 2018 tyrolyean
+ * Copyright © 2018 goliath
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +15,12 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Attribution:
+ *
+ *   Some parts of the code were written by goliath. They may have been used
+ *   very differently, though it is still his code and it was used here with his
+ *   consent.
  */
 
 #include "serial.h"

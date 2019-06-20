@@ -30,7 +30,6 @@ int parse_ecp_msg(const uint8_t* msg){
 		/* It doesn't matter, whether the checksums are right or not,
 		 * this shouldn't have happened.
 		 */
-		 print_ecp_error("invld frme len");
 		 return -1;
 	}
 
@@ -46,7 +45,6 @@ int parse_ecp_msg(const uint8_t* msg){
 	uint16_t crc_should = ibm_crc(msg, msg[ECP_LEN_IDX] - 3);
 	
 	if(crc_is != crc_should){
-		print_ecp_error("CRC msmtch");
 		return -2;
 	}
 	/* By this point we should have gotten a valid frame. All checksums are

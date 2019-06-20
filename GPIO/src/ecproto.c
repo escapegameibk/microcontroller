@@ -32,7 +32,6 @@ int parse_ecp_msg(const uint8_t* msg){
 		/* It doesn't matter, whether the checksums are right or not,
 		 * this shouldn't have happened.
 		 */
-		 print_ecp_error("invld frme len");
 		 return -1;
 	}
 
@@ -42,14 +41,20 @@ int parse_ecp_msg(const uint8_t* msg){
 		return 0;
 	}
 
-	/* Perced to checksum calculation */
+	/* Proceed to checksum calculation */
 	uint16_t crc_is = ((msg[msg[ECP_LEN_IDX] - 3] & 0xFF) << 8 ) | 
 		(msg[msg[ECP_LEN_IDX] - 2] & 0xFF);
 	uint16_t crc_should = ibm_crc(msg, msg[ECP_LEN_IDX] - 3);
+	
 	if(crc_is != crc_should){
-		print_ecp_error("CRC msmtch");
+		
+		/* Discard data and wait for a valid frame. Due to there beeing
+		 * more deices on the bus which could have potentialy received
+		 * the same faulty message I won't print out an error message
+		 */
 		return -1;
 	}
+
 	/* By this point we should have gotten a valid frame. All checksums are
 	 * valid and the frame should have a correct length. Now, let's start
 	 * validating it's logic. */
@@ -61,8 +66,8 @@ int parse_ecp_msg(const uint8_t* msg){
 			 * notify me of my purpose anyway.
 			 */
 			break;
+		
 		case REQ_SEND:
-
 			/* I have to send now all update messages that i have.
 			 * I should first reply with a send notify to my master,
 			 * so that he knows what's going to happen. I don't want
@@ -70,12 +75,14 @@ int parse_ecp_msg(const uint8_t* msg){
 			 */
 			 return process_updates();
 			 break; /* Just in case :D */
+		
 		case SEND_NOTIFY:
 			/* Ähhm i shouldn't receive that. This is only what i
 			 * have to send my master in order to not disappoint
 			 * him. Has my master disappointed me? What has
 			 * happened, i don't understand. */
 			 break;
+		
 		case DEFINE_PORT_ACTION:
 			/* Defines a port direction / writes to the ddr */
 			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
@@ -87,6 +94,7 @@ int parse_ecp_msg(const uint8_t* msg){
 				msg[ECP_PAYLOAD_IDX + 1], 
 				msg[ECP_PAYLOAD_IDX + 2]) >= 0);
 			break;
+		
 		case GET_PORT_ACTION:
 			/* Gets a port */
 			if(msg[ECP_LEN_IDX] <  2 + ECPROTO_OVERHEAD){
@@ -100,6 +108,7 @@ int parse_ecp_msg(const uint8_t* msg){
 				msg[ECP_PAYLOAD_IDX + 1]));
 
 			break;
+
 		case WRITE_PORT_ACTION:
 			/* Defines a port state / writes to the port */
 			if(msg[ECP_LEN_IDX] <  3 + ECPROTO_OVERHEAD){
@@ -112,15 +121,18 @@ int parse_ecp_msg(const uint8_t* msg){
 				msg[ECP_PAYLOAD_IDX + 1], 
 				msg[ECP_PAYLOAD_IDX + 2]) >= 0);
 			break;
+
 		case REGISTER_COUNT:
 			/* Request the gpio register count. */
 			return print_ecp_msg(REGISTER_COUNT, &gpio_register_cnt, 
 				sizeof(uint8_t));
 			break;
+
 		case REGISTER_LIST:
 			/* Requested a list of register ids */
 			return print_port_ids();
 			break;
+
 		case PIN_ENABLED:
 			/* Request wether the given pin is disabled or not */
 		{
@@ -144,8 +156,8 @@ int parse_ecp_msg(const uint8_t* msg){
 
 
 		break;
+
 #ifdef UART_SECONDARY
-		
 		case SECONDARY_PRINT:
 			if(msg[msg[ECP_LEN_IDX] - 4] != 0){
 				print_ecp_error("nonull");
@@ -161,6 +173,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			break;
 
 #endif /* UART_SECONDARY */
+
 #ifdef ANALOG_EN
 		case ADC_GET:
 			{
@@ -235,6 +248,7 @@ int parse_ecp_msg(const uint8_t* msg){
 			
 
 			break;
+
 		case GET_DISABLED_PINS:
 		{
 			initialized = true;
@@ -277,7 +291,6 @@ int parse_ecp_msg(const uint8_t* msg){
 						sizeof(payload));
 				}
 			}
-
 			break;
 
 		case SPECIAL_INTERACT:
@@ -298,20 +311,23 @@ int parse_ecp_msg(const uint8_t* msg){
 
 /* Please use this function as RARELY as possible. The AVR copies all of it's
  * strings into ram during startup. Due to this, it is NOT recommended to
- * use strings in any way. */
+ * use strings in any way, it is however helpful for debugging to send an error
+ * message to the master.
+ */
 int print_ecp_error(char* string){
 	return print_ecp_msg(ERROR_ACTION, (uint8_t*)string, strlen(string) + 
 		1);
 }
 
-/* If the target is larger than 1, tell the master that the inputs were invalid
- */
 int print_ecp_pin_update(char reg_id, uint8_t bit_id, uint8_t target){
 	
 	initialized = true;
 
 	if(target > 1){
-		print_ecp_error("fld 2 get prt");
+	/* If the target is larger than 1, tell the master that the inputs were 
+	 * invalid
+	 */
+		print_ecp_error("err 2 get port");
 	}
 
 	uint8_t pay[] = {(uint8_t)reg_id, bit_id, target};
@@ -323,13 +339,6 @@ int print_success_reply(uint8_t action_id, bool success){
 	return print_ecp_msg(action_id, &suc, sizeof(suc));
 }
 
-#ifdef ANALOG
-int print_adc(){
-	uint8_t adc = get_adc_result();
-	return print_ecp_msg(ADC_GET, &adc, sizeof(adc));
-}
-
-#endif /* ANALOG */
 
 int print_ecp_regs(char car){
 
@@ -360,6 +369,7 @@ int set_ecp_regs(char car, uint8_t ddir, uint8_t port){
 
 }
 
+/* Prints any ecp rsponse message to the Master */
 int print_ecp_msg(uint8_t action_id, uint8_t* payload, size_t payload_length){
 
 	/* Loaded during startup. Contained in the .bss section --> HEAP */

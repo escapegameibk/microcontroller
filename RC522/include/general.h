@@ -24,8 +24,7 @@
 
 #define UART_BAUD_RATE 38400UL
 
-#define ECP_DEVICE_ID 0
-#define ECP_LAST_DEV true
+#define ECP_DEVICE_ID 0x0A
 
 #define MAX_RC522_DEVS
 

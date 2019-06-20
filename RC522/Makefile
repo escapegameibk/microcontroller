@@ -63,7 +63,7 @@ flash: $(TARGET)
 	#$(FLASH_CMD) -e  -U hfuse:w:0xD9:m -U lfuse:w:0xDF:m -U efuse:w:0xFF:m -U flash:w:$^:i 
 	# For atmega 328p:
 	$(FLASH_CMD) -e -U hfuse:w:0xD9:m  -U efuse:w:0xFF:m -U lfuse:w:0xDF:m -U flash:w:$^:i 
-	# If unknown
+	# If unknown or no fuse bits available over programmer
 	#$(FLASH_CMD) -U flash:w:$^:i 
 	$(FLASH_CMD) -U flash:v:$^:i
 clean:                                                                          

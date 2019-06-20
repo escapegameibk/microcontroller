@@ -260,7 +260,7 @@ compatiable the devices basically needed to be able to do basically anything,
 and I was planning to enable any device to perform any task, which was pretty
 dumb. So it was decided, that it was best to separate code for special tasks
 into different code bases, so that it stays maintainable and doesn't look too
-dumb.5
+dumb.
 
 ## device capablilities
 
@@ -369,6 +369,24 @@ implemented:
 
 ##### FASTER GPIO:
 **NO ACTION MAY BE PERFORMED FOR THIS SUBMODULE! PLEASE USE REGULAR ACTIONS!**
+
+# Example frames.
+
+Here are some example frames:
+
+## 0x02 aka asynchroneus updates
+
+This is an example of a slave sending updates to the master. The slave sends a
+port update frame to the master for register C bit 4 to 1.
+
+
+```
+<6><0><1><1><50><ff>
+
+<7><0><2><1><f0><c1><ff>
+
+<9><0><6><42><4><1><1e><63><ff>
+```
 
 # ERRATA
 
